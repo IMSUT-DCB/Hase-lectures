@@ -69,7 +69,22 @@
     #certificate-error { color: var(--accent); font-size: 14px; }
     #load-message, #storage-message { padding: 12px; background: #fffaf0; border-left: 3px solid #ad6817; }
     footer { padding: 20px 16px; text-align: center; font-size: 14px; color: var(--muted); }
-    @media (min-width: 600px) { .q-card { padding: 24px; } }
+    .tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; max-width: 800px; margin: 0 auto; padding: 12px 16px 0; }
+    .tabs button { min-width: 0; min-height: 44px; padding: 10px 4px; border: 0; border-bottom: 3px solid transparent; background: white; color: var(--muted); font-size: 14px; }
+    .tabs button[aria-selected="true"] { border-bottom-color: var(--primary); color: var(--primary); font-weight: 700; }
+    .review-title { margin: 0 0 12px; font-size: 22px; }
+    .review-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; align-items: start; }
+    .review-card { width: 100%; min-width: 0; min-height: 88px; padding: 20px; border: 1px solid var(--border); border-radius: 8px; background: var(--card); color: var(--ink); text-align: left; overflow-wrap: anywhere; transition: border-color 0.15s; }
+    .review-card:hover, .review-card[aria-expanded="true"] { border-color: var(--primary); }
+    .review-name { display: block; font-size: 20px; font-weight: 700; color: var(--primary); }
+    .review-details { display: block; margin-top: 16px; border-top: 1px solid var(--border); }
+    .review-field { display: block; margin-top: 12px; }
+    .review-label { display: block; font-size: 14px; font-weight: 700; }
+    .review-value { display: block; font-size: 16px; color: var(--muted); }
+    @media (min-width: 600px) {
+      .q-card { padding: 24px; }
+      .review-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
   </style>
 </head>
 <body>
@@ -79,13 +94,29 @@
       <p>Interactive Quiz · 基本問題 全5問</p>
     </div>
   </header>
+  <nav class="tabs" role="tablist" aria-label="復習ツール">
+    <button type="button" id="tab-cells" role="tab" aria-selected="true" aria-controls="panel-cells">免疫細胞</button>
+    <button type="button" id="tab-cytokines" role="tab" aria-selected="false" aria-controls="panel-cytokines" tabindex="-1">サイトカイン</button>
+    <button type="button" id="tab-quiz" role="tab" aria-selected="false" aria-controls="panel-quiz" tabindex="-1">復習クイズ</button>
+  </nav>
+  <main>
+    <section id="panel-cells" role="tabpanel" aria-labelledby="tab-cells">
+      <h2 class="review-title">免疫細胞と主な機能</h2>
+      <p class="lead">カードをタップすると説明欄が開き、もう一度タップすると閉じます。</p>
+      <div class="review-grid" id="cells-list"></div>
+    </section>
+    <section id="panel-cytokines" role="tabpanel" aria-labelledby="tab-cytokines" hidden>
+      <h2 class="review-title">主なサイトカインと機能</h2>
+      <p class="lead">カードをタップすると説明欄が開き、もう一度タップすると閉じます。</p>
+      <div class="review-grid" id="cytokines-list"></div>
+    </section>
+    <section id="panel-quiz" role="tabpanel" aria-labelledby="tab-quiz" hidden>
   <div class="quiz-header" role="status" aria-live="polite" aria-atomic="true">
     <div class="progress-inner">
       <span id="quiz-progress">0 / 5 問回答済み</span>
       <strong id="quiz-score">得点：0 / 5 点</strong>
     </div>
   </div>
-  <main>
     <p class="lead">正しい選択肢を1つ選んでください。選ぶとすぐに採点し、解説を表示します。回答後の変更はできません。</p>
     <p class="notice">1問1点。5問中4問以上正解（正答率80%以上）で合格です。</p>
     <p id="load-message" role="status">問題を読み込んでいます。</p>
@@ -106,9 +137,114 @@
     </section>
     <button class="btn" id="quiz-reset" type="button" disabled>クイズをリセット</button>
     <p class="notice">このブラウザに回答状況を保存し、再読み込み後も続きから再開します。リセットすると回答を消去し、問題の順番を並べ直します。</p>
+    </section>
   </main>
   <footer>免疫学 · Interactive Lab</footer>
   <script type="module">
+    // タブ切り替えではクイズを再生成せず、回答と入力内容を維持します。
+    const tabs = [...document.querySelectorAll('[role="tab"]')];
+    function selectTab(selected) {
+      tabs.forEach(tab => {
+        const active = tab === selected;
+        tab.setAttribute('aria-selected', String(active));
+        tab.tabIndex = active ? 0 : -1;
+        document.getElementById(tab.getAttribute('aria-controls')).hidden = !active;
+      });
+    }
+    tabs.forEach((tab, index) => {
+      tab.addEventListener('click', () => selectTab(tab));
+      tab.addEventListener('keydown', event => {
+        let next;
+        if (event.key === 'ArrowRight') next = (index + 1) % tabs.length;
+        if (event.key === 'ArrowLeft') next = (index + tabs.length - 1) % tabs.length;
+        if (event.key === 'Home') next = 0;
+        if (event.key === 'End') next = tabs.length - 1;
+        if (next === undefined) return;
+        event.preventDefault();
+        selectTab(tabs[next]);
+        tabs[next].focus();
+      });
+    });
+
+    // カード名と説明文の「⁺」を、HTMLのsup要素で上付き表示します。
+    function appendReviewText(element, text) {
+      text.split('⁺').forEach((part, partIndex) => {
+        if (partIndex > 0) {
+          const plus = document.createElement('sup');
+          plus.textContent = '+';
+          element.appendChild(plus);
+        }
+        element.appendChild(document.createTextNode(part));
+      });
+    }
+
+    // 提供された原稿のみを、カードの各説明欄に表示します。
+    function createReviewCards(listId, entries, labels) {
+      const container = document.getElementById(listId);
+      entries.forEach(([name, ...values], index) => {
+        const card = document.createElement('button');
+        card.type = 'button';
+        card.className = 'review-card';
+        card.setAttribute('aria-expanded', 'false');
+        const title = document.createElement('span');
+        title.className = 'review-name';
+        title.id = `${listId}-name-${index}`;
+        appendReviewText(title, name);
+        card.setAttribute('aria-labelledby', title.id);
+        const details = document.createElement('span');
+        details.className = 'review-details';
+        details.id = `${listId}-details-${index}`;
+        details.hidden = true;
+        card.setAttribute('aria-controls', details.id);
+        labels.forEach((label, fieldIndex) => {
+          const field = document.createElement('span');
+          field.className = 'review-field';
+          const heading = document.createElement('span');
+          heading.className = 'review-label';
+          heading.textContent = label;
+          const value = document.createElement('span');
+          value.className = 'review-value';
+          appendReviewText(value, values[fieldIndex]);
+          field.append(heading, value);
+          details.appendChild(field);
+        });
+        card.append(title, details);
+        card.addEventListener('click', () => {
+          details.hidden = !details.hidden;
+          card.setAttribute('aria-expanded', String(!details.hidden));
+        });
+        container.appendChild(card);
+      });
+    }
+    createReviewCards('cells-list', [
+      ["好中球", "細菌や真菌などの貪食・殺菌", "自然免疫", "血液中で最も多い白血球。感染部位へ速やかに遊走し、貪食、活性酸素、顆粒内容物などによって微生物を排除する。"],
+      ["単球", "貪食、炎症応答、マクロファージや樹状細胞への分化", "自然免疫", "血液中を循環する単核食細胞。組織へ移行すると、環境に応じてマクロファージなどへ分化する。"],
+      ["マクロファージ", "貪食、サイトカイン産生、組織恒常性の維持", "自然免疫", "組織に存在する大型の食細胞。病原体や死細胞を除去するとともに、炎症の誘導や組織修復にも関与する。"],
+      ["樹状細胞", "抗原提示によるT細胞応答の開始", "自然免疫と獲得免疫をつなぐ", "末梢組織で抗原を取り込み、リンパ節へ移動してナイーブT細胞に抗原を提示する。獲得免疫応答の開始に重要。"],
+      ["NK細胞", "ウイルス感染細胞や腫瘍細胞の傷害", "自然免疫", "抗原特異的T細胞受容体を用いずに標的細胞を認識し、パーフォリンやグランザイムなどを介して細胞傷害を誘導する。"],
+      ["B細胞", "抗体産生、抗原提示", "獲得免疫", "抗原を認識すると活性化し、形質細胞へ分化して抗体を産生する。一部は記憶B細胞となる。"],
+      ["CD4⁺ T細胞", "他の免疫細胞の機能を調節する", "獲得免疫", "MHCクラスII分子上に提示された抗原を認識する。活性化後、Th1、Th2、Th17、Tregなどの機能的サブセットへ分化する。"],
+      ["Th1細胞", "細胞性免疫の促進", "獲得免疫", "主にIFN-γを産生し、マクロファージの活性化などを介して細胞内病原体に対する免疫応答に関与する。"],
+      ["Th2細胞", "2型免疫応答の促進", "獲得免疫", "IL-4、IL-5、IL-13などを産生し、IgE応答、好酸球応答、寄生虫に対する免疫やアレルギー反応に関与する。"],
+      ["Th17細胞", "好中球を中心とした炎症応答の促進", "獲得免疫", "IL-17Aなどを産生し、上皮細胞などに作用してケモカイン産生を誘導し、細菌や真菌に対するバリア機能に関与する。"],
+      ["制御性T細胞（Treg）", "過剰な免疫応答の抑制と免疫寛容の維持", "獲得免疫", "FOXP3を発現するCD4⁺ T細胞集団。自己反応性免疫応答や過剰な炎症を抑制する。"],
+      ["細胞傷害性T細胞（CD8⁺ T細胞）", "感染細胞や腫瘍細胞の傷害", "獲得免疫", "MHCクラスI分子上に提示された抗原を認識し、パーフォリンやグランザイムなどを介して標的細胞を排除する。"]
+    ], ["主な役割", "分類", "特徴"]);
+    createReviewCards('cytokines-list', [
+      ["IL-1β", "マクロファージ、単球など", "血管内皮細胞、視床下部、各種免疫細胞", "炎症反応を促進し、発熱や血管内皮の活性化などを誘導する。"],
+      ["IL-2", "活性化T細胞", "T細胞、NK細胞", "T細胞の増殖と生存を促進する。Tregの維持にも重要である。"],
+      ["IL-4", "Th2細胞など", "B細胞、T細胞、マクロファージなど", "Th2分化を促進し、B細胞のIgEへのクラススイッチを誘導する。"],
+      ["IL-5", "Th2細胞など", "好酸球、B細胞", "好酸球の増殖・分化・活性化を促進する。"],
+      ["IL-6", "マクロファージ、単球、線維芽細胞など", "肝細胞、B細胞、T細胞など", "炎症反応を促進し、肝臓での急性期タンパク質産生やリンパ球応答に関与する。"],
+      ["IL-8/CXCL8", "マクロファージ、上皮細胞、血管内皮細胞など", "好中球", "好中球の遊走と活性化を誘導するケモカイン。"],
+      ["IL-10", "Treg、マクロファージ、その他の免疫細胞", "マクロファージ、樹状細胞など", "炎症性サイトカイン産生や抗原提示細胞の活性化を抑え、過剰な炎症を制御する。"],
+      ["IL-12", "樹状細胞、マクロファージ", "NK細胞、T細胞", "NK細胞やT細胞からのIFN-γ産生を促進し、Th1応答を誘導する。"],
+      ["IL-17A", "Th17細胞など", "上皮細胞、線維芽細胞、間質細胞など", "ケモカインや炎症関連分子の産生を誘導し、好中球の動員を促進する。"],
+      ["IFN-γ", "Th1細胞、NK細胞、細胞傷害性T細胞", "マクロファージをはじめとする多くの細胞", "マクロファージの活性化を促進し、細胞内病原体に対する細胞性免疫を増強する。"],
+      ["TNF-α", "マクロファージ、T細胞など", "血管内皮細胞をはじめとする多くの細胞", "炎症反応を促進し、血管内皮の活性化や炎症細胞の動員に関与する。"],
+      ["TGF-β", "Treg、マクロファージ、その他多くの細胞", "T細胞、B細胞をはじめとする多くの細胞", "Treg細胞やTh17細胞の分化に関与する。また、B細胞のIgAへのクラススイッチを促進する。"]
+    ], ["主な産生細胞", "主な標的", "主な機能"]);
+
     const loadMessage = document.getElementById('load-message');
     try {
       const { QUIZ } = await import('./quiz-data.js');
