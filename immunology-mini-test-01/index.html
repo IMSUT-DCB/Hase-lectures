@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>免疫学ミニテスト 第1回</title>
+  <style>
+    :root {
+      --bg: #f7f9fc;
+      --card: #ffffff;
+      --border: #d7dce5;
+      --ink: #1a2633;
+      --muted: #5a6978;
+      --primary: #2b6cb0;
+      --accent: #b83030;
+      --ok: #247347;
+    }
+    * { box-sizing: border-box; }
+    [hidden] { display: none !important; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font: 16px/1.7 -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", sans-serif;
+      overflow-wrap: anywhere;
+    }
+    header { padding: 24px 16px; background: linear-gradient(135deg, var(--primary), #1a4a80); color: white; }
+    .header-inner, main, .progress-inner { width: 100%; max-width: 800px; margin: 0 auto; }
+    h1 { font-size: 24px; margin: 0; }
+    header p { font-size: 14px; margin: 4px 0 0; }
+    .quiz-header { position: sticky; top: 0; z-index: 10; background: white; border-bottom: 1px solid var(--border); padding: 12px 16px; }
+    .progress-inner { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 16px; align-items: center; }
+    #quiz-progress { font-size: 14px; }
+    #quiz-score { font-size: 18px; color: var(--primary); }
+    main { padding: 24px 16px; }
+    .lead { color: var(--muted); margin: 0 0 20px; }
+    .card, .q-card { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 16px; margin-bottom: 16px; }
+    .q-num, .q-source { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 14px; }
+    .q-num { background: var(--primary); color: white; }
+    .q-source { background: #edf2f7; color: var(--muted); margin-left: 8px; }
+    .q-stem { font-size: 17px; margin: 12px 0 16px; }
+    .q-opts { display: flex; flex-direction: column; gap: 8px; }
+    button { min-height: 44px; font: inherit; cursor: pointer; }
+    button:focus-visible, #quiz-finish:focus-visible { outline: 3px solid var(--primary); outline-offset: 3px; }
+    .q-opt { width: 100%; display: flex; gap: 10px; align-items: flex-start; padding: 12px; border: 1.5px solid var(--border); border-radius: 6px; background: white; color: var(--ink); text-align: left; }
+    .opt-letter { flex: 0 0 24px; font-weight: 700; }
+    .opt-text { min-width: 0; }
+    .q-opt:hover:not(:disabled) { background: #f0f7ff; border-color: var(--primary); }
+    .q-opt:disabled { cursor: default; opacity: 1; }
+    .q-opt.correct { background: #c6f6d5; border-color: var(--ok); }
+    .q-opt.wrong { background: #fed7d7; border-color: var(--accent); }
+    .q-card.answered.correct { border-color: var(--ok); }
+    .q-card.answered.incorrect { border-color: var(--accent); }
+    .q-explain { padding: 12px; margin-top: 16px; border-left: 3px solid var(--primary); background: #f7fafc; border-radius: 4px; }
+    .q-explain p { margin: 8px 0 0; }
+    .quiz-finish { text-align: center; scroll-margin-top: 100px; }
+    .quiz-finish.passed { border: 2px solid var(--ok); background: #f0fff4; }
+    .quiz-finish.failed { border: 2px solid #ad6817; background: #fffaf0; }
+    .quiz-finish h2 { font-size: 22px; margin: 0; }
+    .final-score { font-size: 28px; font-weight: 700; margin: 8px 0; }
+    .btn { border: 1px solid var(--primary); border-radius: 6px; padding: 10px 20px; background: var(--primary); color: white; }
+    .btn:disabled { cursor: default; opacity: 0.6; }
+    .notice { font-size: 14px; color: var(--muted); }
+    .certificate-form { margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border); text-align: left; }
+    .certificate-form label { display: block; font-weight: 700; }
+    .certificate-form input { display: block; width: 100%; min-height: 44px; margin: 8px 0 12px; padding: 10px; border: 1px solid var(--border); border-radius: 6px; font: inherit; background: white; }
+    .certificate-form input:focus-visible { outline: 3px solid var(--primary); outline-offset: 2px; }
+    .certificate-form .btn { width: 100%; }
+    #certificate-error { color: var(--accent); font-size: 14px; }
+    #load-message, #storage-message { padding: 12px; background: #fffaf0; border-left: 3px solid #ad6817; }
+    footer { padding: 20px 16px; text-align: center; font-size: 14px; color: var(--muted); }
+    @media (min-width: 600px) { .q-card { padding: 24px; } }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-inner">
+      <h1>免疫学ミニテスト 第1回</h1>
+      <p>Interactive Quiz · 基本問題 全5問</p>
+    </div>
+  </header>
+  <div class="quiz-header" role="status" aria-live="polite" aria-atomic="true">
+    <div class="progress-inner">
+      <span id="quiz-progress">0 / 5 問回答済み</span>
+      <strong id="quiz-score">得点：0 / 5 点</strong>
+    </div>
+  </div>
+  <main>
+    <p class="lead">正しい選択肢を1つ選んでください。選ぶとすぐに採点し、解説を表示します。回答後の変更はできません。</p>
+    <p class="notice">1問1点。5問中4問以上正解（正答率80%以上）で合格です。</p>
+    <p id="load-message" role="status">問題を読み込んでいます。</p>
+    <noscript><p>クイズを利用するには、ブラウザのJavaScriptを有効にしてください。</p></noscript>
+    <p id="storage-message" role="status" hidden></p>
+    <div id="quiz-list"></div>
+    <section class="quiz-finish card" id="quiz-finish" tabindex="-1" aria-labelledby="quiz-finish-title" hidden>
+      <h2 id="quiz-finish-title">結果</h2>
+      <p class="final-score" id="quiz-finish-score"></p>
+      <p id="quiz-finish-msg"></p>
+      <form class="certificate-form" id="certificate-form" hidden novalidate>
+        <label for="student-number">学籍番号</label>
+        <input id="student-number" type="text" maxlength="64" autocomplete="off" spellcheck="false" required aria-describedby="certificate-note certificate-error">
+        <p id="certificate-error" role="alert" hidden></p>
+        <button class="btn" type="submit">修了証 PDF を出力</button>
+        <p class="notice" id="certificate-note">別ウィンドウの印刷画面で「PDFとして保存」を選んでください。学籍番号は修了証の作成にのみ使用し、ブラウザへの保存や外部送信は行いません。</p>
+      </form>
+    </section>
+    <button class="btn" id="quiz-reset" type="button" disabled>クイズをリセット</button>
+    <p class="notice">このブラウザに回答状況を保存し、再読み込み後も続きから再開します。リセットすると回答を消去し、問題の順番を並べ直します。</p>
+  </main>
+  <footer>免疫学 · Interactive Lab</footer>
+  <script type="module">
+    const loadMessage = document.getElementById('load-message');
+    try {
+      const { QUIZ } = await import('./quiz-data.js');
+      startQuiz(QUIZ);
+      loadMessage.hidden = true;
+    } catch (error) {
+      loadMessage.textContent = location.protocol === 'file:'
+        ? 'このクイズはHTMLファイルを直接開くと問題を読み込めません。GitHub Pages、またはローカルプレビューのURLから開いてください。'
+        : '問題を読み込めませんでした。通信状況と、同じフォルダに quiz-data.js があることを確認して、再読み込みしてください。';
+    }
+
+    function startQuiz(QUIZ) {
+      const STORAGE_KEY = 'immunology_quiz_01_v1';
+      const signature = JSON.stringify(QUIZ);
+      const LETTERS = ['A', 'B', 'C', 'D'];
+      const list = document.getElementById('quiz-list');
+      const finish = document.getElementById('quiz-finish');
+      const storageMessage = document.getElementById('storage-message');
+      const certificateForm = document.getElementById('certificate-form');
+      const studentNumber = document.getElementById('student-number');
+      const certificateError = document.getElementById('certificate-error');
+      let state = loadState();
+
+      function newState() {
+        const order = QUIZ.map((_, i) => i);
+        // 新規開始とリセットのときだけ問題順をシャッフルします。
+        for (let i = order.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [order[i], order[j]] = [order[j], order[i]];
+        }
+        return { signature, order, answers: QUIZ.map(() => null) };
+      }
+
+      function loadState() {
+        try {
+          const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+          // 問題データと保存形式を検証してから復元します。
+          if (saved && saved.signature === signature &&
+              Array.isArray(saved.order) && saved.order.length === QUIZ.length &&
+              new Set(saved.order).size === QUIZ.length &&
+              saved.order.every(i => Number.isInteger(i) && i >= 0 && i < QUIZ.length) &&
+              Array.isArray(saved.answers) && saved.answers.length === QUIZ.length &&
+              saved.answers.every(a => a === null || (Number.isInteger(a) && a >= 0 && a < 4))) {
+            return saved;
+          }
+        } catch (error) {
+          storageMessage.textContent = '保存した回答を読み込めないため、最初から開始します。';
+          storageMessage.hidden = false;
+        }
+        return newState();
+      }
+
+      function saveState() {
+        try {
+          // 得点は保存せず、問題ごとの回答から計算します。
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+          storageMessage.hidden = true;
+        } catch (error) {
+          storageMessage.textContent = 'このブラウザでは回答を保存できません。クイズは続けられますが、再読み込みすると今回の回答が失われる場合があります。';
+          storageMessage.hidden = false;
+        }
+      }
+
+      function updateSummary() {
+        const done = state.answers.filter(a => a !== null).length;
+        const score = state.answers.filter((a, i) => a === QUIZ[i].correct).length;
+        document.getElementById('quiz-progress').textContent = `${done} / ${QUIZ.length} 問回答済み`;
+        document.getElementById('quiz-score').textContent = `得点：${score} / ${QUIZ.length} 点`;
+        finish.hidden = done !== QUIZ.length;
+        certificateForm.hidden = done !== QUIZ.length || score / QUIZ.length < 0.8;
+        if (certificateForm.hidden) {
+          certificateForm.reset();
+          certificateError.hidden = true;
+          studentNumber.removeAttribute('aria-invalid');
+        }
+        if (!finish.hidden) {
+          const passed = score / QUIZ.length >= 0.8;
+          finish.classList.toggle('passed', passed);
+          finish.classList.toggle('failed', !passed);
+          document.getElementById('quiz-finish-title').textContent = passed ? '結果：合格' : '結果：不合格';
+          document.getElementById('quiz-finish-score').textContent = `${score} / ${QUIZ.length} 点（正答率 ${Math.round(score / QUIZ.length * 100)}%）`;
+          document.getElementById('quiz-finish-msg').textContent = passed
+            ? '合格基準を達成しました。各問題の解説も確認しましょう。'
+            : '合格には4問以上の正解が必要です。解説を確認し、リセットして再挑戦できます。';
+        }
+      }
+
+      function updateCard(card, qi) {
+        const answer = state.answers[qi];
+        if (answer === null) return;
+        const question = QUIZ[qi];
+        const correct = answer === question.correct;
+        card.classList.add('answered', correct ? 'correct' : 'incorrect');
+        card.querySelectorAll('.q-opt').forEach((button, oi) => {
+          button.disabled = true;
+          button.classList.toggle('correct', oi === question.correct);
+          button.classList.toggle('wrong', oi === answer && !correct);
+        });
+        const explain = card.querySelector('.q-explain');
+        explain.hidden = false;
+        explain.querySelector('strong').textContent = `${correct ? '正解です。' : '不正解です。'} あなたの回答：${LETTERS[answer]} ／ 正解：${LETTERS[question.correct]}`;
+      }
+
+      function renderQuiz() {
+        list.replaceChildren();
+        state.order.forEach((qi, position) => {
+          const question = QUIZ[qi];
+          const card = document.createElement('section');
+          card.className = 'q-card';
+          card.dataset.qi = qi;
+          card.setAttribute('aria-labelledby', `question-${qi}`);
+          card.innerHTML = '<div><span class="q-num"></span><span class="q-source"></span></div><h2 class="q-stem"></h2><div class="q-opts"></div><div class="q-explain" aria-live="polite" hidden><strong></strong><p></p></div>';
+          card.querySelector('.q-num').textContent = `問 ${position + 1}`;
+          card.querySelector('.q-source').textContent = question.source;
+          const stem = card.querySelector('.q-stem');
+          stem.id = `question-${qi}`;
+          stem.textContent = question.stem;
+          card.querySelector('.q-explain p').textContent = `解説：${question.explain}`;
+          // 選択肢は原稿のA〜Dの順序を保ちます。
+          question.options.forEach((option, oi) => {
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = 'q-opt';
+            button.innerHTML = '<span class="opt-letter"></span><span class="opt-text"></span>';
+            button.querySelector('.opt-letter').textContent = `${LETTERS[oi]}.`;
+            button.querySelector('.opt-text').textContent = option;
+            button.addEventListener('click', () => {
+              if (state.answers[qi] !== null) return;
+              state.answers[qi] = oi;
+              updateCard(card, qi);
+              updateSummary();
+              saveState();
+              if (!finish.hidden) finish.focus();
+            });
+            card.querySelector('.q-opts').appendChild(button);
+          });
+          updateCard(card, qi);
+          list.appendChild(card);
+        });
+        updateSummary();
+      }
+
+      // 入力値はHTMLとして解釈させず、修了証の文字として表示します。
+      function escapeHTML(value) {
+        return String(value).replace(/[&<>"']/g, character => ({
+          '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+        })[character]);
+      }
+
+      // 検証コードは同じ学籍番号・得点・日付から再現できる照合用です。
+      // 秘密鍵を使わないため、本人認証や改ざんの証明には使用できません。
+      function verificationCode(number, score, date) {
+        let hash = 2166136261;
+        const bytes = new TextEncoder().encode(JSON.stringify([number, score, date]));
+        for (const byte of bytes) hash = Math.imul(hash ^ byte, 16777619);
+        return (hash >>> 0).toString(16).toUpperCase().padStart(8, '0');
+      }
+
+      studentNumber.addEventListener('input', () => {
+        certificateError.hidden = true;
+        studentNumber.removeAttribute('aria-invalid');
+      });
+
+      certificateForm.addEventListener('submit', event => {
+        event.preventDefault();
+        // 表示状態だけに頼らず、出力時にも全問回答と合格を確認します。
+        const score = state.answers.filter((answer, i) => answer === QUIZ[i].correct).length;
+        if (state.answers.some(answer => answer === null) || score / QUIZ.length < 0.8) return;
+        const number = studentNumber.value.trim();
+        if (!number) {
+          certificateError.textContent = '学籍番号を入力してください。';
+          certificateError.hidden = false;
+          studentNumber.setAttribute('aria-invalid', 'true');
+          studentNumber.focus();
+          return;
+        }
+        certificateError.hidden = true;
+        const now = new Date();
+        const date = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+        const code = verificationCode(number, score, date);
+        const printHTML = `<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>免疫学ミニテスト 第1回 修了証</title>
+<style>
+  @page { size: A4 portrait; margin: 20mm; }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 16px; background: #f7f9fc; color: #1a2633; font: 16px/1.7 -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", sans-serif; overflow-wrap: anywhere; }
+  .certificate { width: 100%; max-width: 170mm; margin: 0 auto; padding: 24px; border: 2px solid #2b6cb0; background: white; }
+  h1 { margin: 0 0 32px; font-size: 24px; text-align: center; color: #1a4a80; }
+  .intro { margin-bottom: 28px; }
+  dl { margin: 0; }
+  dl > div { display: grid; grid-template-columns: 5em minmax(0, 1fr); gap: 12px; padding: 12px 0; border-bottom: 1px solid #d7dce5; }
+  dt { font-weight: 700; }
+  dd { margin: 0; }
+  .code { font-family: monospace; letter-spacing: 1px; }
+  .print-controls { max-width: 170mm; margin: 16px auto; font-size: 14px; }
+  button { min-height: 44px; padding: 10px 20px; font: inherit; color: white; background: #2b6cb0; border: 0; border-radius: 6px; cursor: pointer; }
+  @media print {
+    body { padding: 0; background: white; }
+    .certificate { max-width: none; padding: 12mm; break-inside: avoid; }
+    .print-controls { display: none; }
+  }
+</style>
+</head>
+<body>
+<main class="certificate">
+  <h1>免疫学ミニテスト 第1回 修了証</h1>
+  <p class="intro">免疫学ミニテスト 第1回の全5問に回答し、合格基準（正答率80%以上）を達成しました。</p>
+  <dl>
+    <div><dt>講義名</dt><dd>免疫学</dd></div>
+    <div><dt>回</dt><dd>第1回</dd></div>
+    <div><dt>学籍番号</dt><dd>${escapeHTML(number)}</dd></div>
+    <div><dt>得点</dt><dd>5問中${score}問正解</dd></div>
+    <div><dt>正答率</dt><dd>${Math.round(score / QUIZ.length * 100)}%</dd></div>
+    <div><dt>日付</dt><dd>${date}</dd></div>
+    <div><dt>検証コード</dt><dd class="code">${code}</dd></div>
+  </dl>
+</main>
+<div class="print-controls">
+  <p>印刷画面で「PDFとして保存」を選んでください。自動で開かない場合は、下のボタンを押してください。</p>
+  <button type="button" id="print-again">印刷画面を開く</button>
+</div>
+<script>
+  document.getElementById('print-again').addEventListener('click', () => window.print());
+  // 読み込みとフォントの準備、描画を待ってから印刷します。
+  window.addEventListener('load', async () => {
+    await document.fonts.ready;
+    requestAnimationFrame(() => requestAnimationFrame(() => window.print()));
+  });
+<\/script>
+</body>
+</html>`;
+        const url = URL.createObjectURL(new Blob([printHTML], { type: 'text/html;charset=utf-8' }));
+        const printWindow = window.open(url, '_blank');
+        if (!printWindow) {
+          URL.revokeObjectURL(url);
+          certificateError.textContent = '修了証を開けませんでした。このサイトのポップアップを許可して、もう一度出力してください。';
+          certificateError.hidden = false;
+          return;
+        }
+        printWindow.opener = null;
+        // 印刷中や再印刷時の読み込みを妨げないよう、閉じた後に解放します。
+        const closeTimer = setInterval(() => {
+          if (printWindow.closed) {
+            clearInterval(closeTimer);
+            URL.revokeObjectURL(url);
+          }
+        }, 1000);
+      });
+
+      document.getElementById('quiz-reset').addEventListener('click', () => {
+        state = newState();
+        saveState();
+        renderQuiz();
+        window.scrollTo(0, 0);
+      });
+      renderQuiz();
+      saveState();
+      document.getElementById('quiz-reset').disabled = false;
+    }
+  </script>
+</body>
+</html>
