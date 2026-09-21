@@ -66,9 +66,9 @@
     .certificate-form input { display: block; width: 100%; min-height: 44px; margin: 8px 0 12px; padding: 10px; border: 1px solid var(--border); border-radius: 6px; font: inherit; background: white; }
     .certificate-form input:focus-visible { outline: 3px solid var(--primary); outline-offset: 2px; }
     .certificate-form .btn { width: 100%; }
-    .lms-link { display: flex; align-items: center; justify-content: center; width: 100%; min-height: 44px; margin-top: 12px; text-align: center; text-decoration: none; font-weight: 700; color: var(--ink); }
-    .certificate-submit { background: #d946ef; border-color: #d946ef; }
-    .survey-link { background: #f59e0b; border-color: #f59e0b; }
+    .lms-link { display: flex; align-items: center; justify-content: center; width: 100%; min-height: 44px; margin-top: 12px; text-align: center; text-decoration: none; font-weight: 700; color: white; }
+    .certificate-submit { background: #7c3aed; border-color: #7c3aed; }
+    .survey-link { background: #0f766e; border-color: #0f766e; }
     .lms-link:hover { text-decoration: underline; }
     .lms-link:focus-visible { outline: 3px solid var(--primary); outline-offset: 3px; }
     #certificate-error { color: var(--accent); font-size: 14px; }
@@ -296,14 +296,25 @@
       const certificateError = document.getElementById('certificate-error');
       let state = loadState();
 
-      function newState() {
+      function newState(previous = null) {
         const order = QUIZ.map((_, i) => i);
         // 新規開始とリセットのときだけ問題順をシャッフルします。
         for (let i = order.length - 1; i > 0; i--) {
           const j = Math.floor(Math.random() * (i + 1));
           [order[i], order[j]] = [order[j], order[i]];
         }
-        return { signature, order, answers: QUIZ.map(() => null) };
+        // 元の選択肢番号を並べ替え、回答・正解は元の番号で保持します。
+        const optionOrders = QUIZ.map((question, qi) => {
+          const indices = question.options.map((_, i) => i);
+          do {
+            for (let i = indices.length - 1; i > 0; i--) {
+              const j = Math.floor(Math.random() * (i + 1));
+              [indices[i], indices[j]] = [indices[j], indices[i]];
+            }
+          } while (previous && indices.every((value, i) => value === previous.optionOrders[qi][i]));
+          return indices;
+        });
+        return { signature, order, optionOrders, answers: QUIZ.map(() => null) };
       }
 
       function loadState() {
@@ -316,7 +327,16 @@
               saved.order.every(i => Number.isInteger(i) && i >= 0 && i < QUIZ.length) &&
               Array.isArray(saved.answers) && saved.answers.length === QUIZ.length &&
               saved.answers.every(a => a === null || (Number.isInteger(a) && a >= 0 && a < 4))) {
-            return saved;
+            // 旧形式の保存データは、当時の選択肢順と回答を維持します。
+            if (!Object.prototype.hasOwnProperty.call(saved, 'optionOrders')) {
+              saved.optionOrders = QUIZ.map(question => question.options.map((_, i) => i));
+            }
+            if (Array.isArray(saved.optionOrders) && saved.optionOrders.length === QUIZ.length &&
+                saved.optionOrders.every((indices, qi) => Array.isArray(indices) &&
+                  indices.length === QUIZ[qi].options.length && new Set(indices).size === indices.length &&
+                  indices.every(i => Number.isInteger(i) && i >= 0 && i < indices.length))) {
+              return saved;
+            }
           }
         } catch (error) {
           storageMessage.textContent = '保存した回答を読み込めないため、最初から開始します。';
@@ -366,14 +386,15 @@
         const question = QUIZ[qi];
         const correct = answer === question.correct;
         card.classList.add('answered', correct ? 'correct' : 'incorrect');
-        card.querySelectorAll('.q-opt').forEach((button, oi) => {
+        card.querySelectorAll('.q-opt').forEach((button, displayIndex) => {
+          const oi = state.optionOrders[qi][displayIndex];
           button.disabled = true;
           button.classList.toggle('correct', oi === question.correct);
           button.classList.toggle('wrong', oi === answer && !correct);
         });
         const explain = card.querySelector('.q-explain');
         explain.hidden = false;
-        explain.querySelector('strong').textContent = `${correct ? '正解です。' : '不正解です。'} あなたの回答：${LETTERS[answer]} ／ 正解：${LETTERS[question.correct]}`;
+        explain.querySelector('strong').textContent = `${correct ? '正解です。' : '不正解です。'} あなたの回答：${LETTERS[state.optionOrders[qi].indexOf(answer)]} ／ 正解：${LETTERS[state.optionOrders[qi].indexOf(question.correct)]}`;
       }
 
       function renderQuiz() {
@@ -391,13 +412,14 @@
           stem.id = `question-${qi}`;
           stem.textContent = question.stem;
           card.querySelector('.q-explain p').textContent = `解説：${question.explain}`;
-          // 選択肢は原稿のA〜Dの順序を保ちます。
-          question.options.forEach((option, oi) => {
+          // 保存済みの表示順で描画し、回答には元の選択肢番号を記録します。
+          state.optionOrders[qi].forEach((oi, displayIndex) => {
+            const option = question.options[oi];
             const button = document.createElement('button');
             button.type = 'button';
             button.className = 'q-opt';
             button.innerHTML = '<span class="opt-letter"></span><span class="opt-text"></span>';
-            button.querySelector('.opt-letter').textContent = `${LETTERS[oi]}.`;
+            button.querySelector('.opt-letter').textContent = `${LETTERS[displayIndex]}.`;
             button.querySelector('.opt-text').textContent = option;
             button.addEventListener('click', () => {
               if (state.answers[qi] !== null) return;
@@ -527,7 +549,7 @@
       });
 
       document.getElementById('quiz-reset').addEventListener('click', () => {
-        state = newState();
+        state = newState(state);
         saveState();
         renderQuiz();
         window.scrollTo(0, 0);
