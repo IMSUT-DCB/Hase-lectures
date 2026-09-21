@@ -66,6 +66,11 @@
     .certificate-form input { display: block; width: 100%; min-height: 44px; margin: 8px 0 12px; padding: 10px; border: 1px solid var(--border); border-radius: 6px; font: inherit; background: white; }
     .certificate-form input:focus-visible { outline: 3px solid var(--primary); outline-offset: 2px; }
     .certificate-form .btn { width: 100%; }
+    .lms-link { display: flex; align-items: center; justify-content: center; width: 100%; min-height: 44px; margin-top: 12px; text-align: center; text-decoration: none; font-weight: 700; color: var(--ink); }
+    .certificate-submit { background: #d946ef; border-color: #d946ef; }
+    .survey-link { background: #f59e0b; border-color: #f59e0b; }
+    .lms-link:hover { text-decoration: underline; }
+    .lms-link:focus-visible { outline: 3px solid var(--primary); outline-offset: 3px; }
     #certificate-error { color: var(--accent); font-size: 14px; }
     #load-message, #storage-message { padding: 12px; background: #fffaf0; border-left: 3px solid #ad6817; }
     footer { padding: 20px 16px; text-align: center; font-size: 14px; color: var(--muted); }
@@ -139,8 +144,11 @@
         <input id="student-number" type="text" maxlength="64" autocomplete="off" spellcheck="false" required aria-describedby="certificate-note certificate-error">
         <p id="certificate-error" role="alert" hidden></p>
         <button class="btn" type="submit">修了証 PDF を出力</button>
+        <a class="btn lms-link certificate-submit" href="https://lms.keio.jp/courses/151918/assignments/1298255?module_item_id=6535626" target="_blank" rel="noopener noreferrer">修了証を提出する</a>
+        <p class="notice">「修了証 PDF を出力」でPDFを保存し、「修了証を提出する」からK-LMSの課題提出画面でPDFをアップロードしてください。</p>
         <p class="notice" id="certificate-note">別ウィンドウの印刷画面で「PDFとして保存」を選んでください。学籍番号は修了証の作成にのみ使用し、ブラウザへの保存や外部送信は行いません。</p>
       </form>
+      <a class="btn lms-link survey-link" href="https://lms.keio.jp/courses/151918/assignments/1320730" target="_blank" rel="noopener noreferrer">アンケートに回答する</a>
     </section>
     <button class="btn" id="quiz-reset" type="button" disabled>クイズをリセット</button>
     <p class="notice">このブラウザに回答状況を保存し、再読み込み後も続きから再開します。リセットすると回答を消去し、問題の順番を並べ直します。</p>
