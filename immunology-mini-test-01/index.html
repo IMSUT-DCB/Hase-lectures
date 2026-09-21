@@ -69,7 +69,7 @@
     #certificate-error { color: var(--accent); font-size: 14px; }
     #load-message, #storage-message { padding: 12px; background: #fffaf0; border-left: 3px solid #ad6817; }
     footer { padding: 20px 16px; text-align: center; font-size: 14px; color: var(--muted); }
-    .tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; max-width: 800px; margin: 0 auto; padding: 12px 16px 0; }
+    .tabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; max-width: 800px; margin: 0 auto; padding: 12px 16px 0; }
     .tabs button { min-width: 0; min-height: 44px; padding: 10px 4px; border: 0; border-bottom: 3px solid transparent; background: white; color: var(--muted); font-size: 14px; }
     .tabs button[aria-selected="true"] { border-bottom-color: var(--primary); color: var(--primary); font-weight: 700; }
     .review-title { margin: 0 0 12px; font-size: 22px; }
@@ -81,7 +81,13 @@
     .review-field { display: block; margin-top: 12px; }
     .review-label { display: block; font-size: 14px; font-weight: 700; }
     .review-value { display: block; font-size: 16px; color: var(--muted); }
+    .lecture-questions { padding-left: 24px; margin: 0 0 24px; }
+    .lecture-questions li + li { margin-top: 12px; }
+    .notebook-link { display: flex; align-items: center; justify-content: center; width: 100%; min-height: 52px; text-align: center; text-decoration: none; font-weight: 700; }
+    .notebook-link:hover { background: #1a4a80; }
+    .notebook-link:focus-visible { outline: 3px solid var(--primary); outline-offset: 3px; }
     @media (min-width: 600px) {
+      .tabs { grid-template-columns: repeat(4, minmax(0, 1fr)); }
       .q-card { padding: 24px; }
       .review-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     }
@@ -98,6 +104,7 @@
     <button type="button" id="tab-cells" role="tab" aria-selected="true" aria-controls="panel-cells">免疫細胞</button>
     <button type="button" id="tab-cytokines" role="tab" aria-selected="false" aria-controls="panel-cytokines" tabindex="-1">サイトカイン</button>
     <button type="button" id="tab-quiz" role="tab" aria-selected="false" aria-controls="panel-quiz" tabindex="-1">復習クイズ</button>
+    <button type="button" id="tab-questions" role="tab" aria-selected="false" aria-controls="panel-questions" tabindex="-1">講義について質問</button>
   </nav>
   <main>
     <section id="panel-cells" role="tabpanel" aria-labelledby="tab-cells">
@@ -137,6 +144,19 @@
     </section>
     <button class="btn" id="quiz-reset" type="button" disabled>クイズをリセット</button>
     <p class="notice">このブラウザに回答状況を保存し、再読み込み後も続きから再開します。リセットすると回答を消去し、問題の順番を並べ直します。</p>
+    </section>
+    <section id="panel-questions" role="tabpanel" aria-labelledby="tab-questions" hidden>
+      <div class="card">
+        <h2 class="review-title">講義について質問する</h2>
+        <p class="lead">この講義の内容について、分からないことを自由に質問できます。<br>第1回の講義資料、Student Notes、免疫学教科書をもとにNotebookLMが回答します。</p>
+        <p><strong>質問例：</strong></p>
+        <ul class="lecture-questions">
+          <li>自然免疫と獲得免疫は、働き始める速さや免疫記憶の点でどう違いますか？</li>
+          <li>ジェンナーの種痘は、免疫のどのような性質を利用して天然痘を予防したのですか？</li>
+          <li>好中球、マクロファージ、リンパ球は、それぞれどのような役割を担っていますか？</li>
+        </ul>
+        <a class="btn notebook-link" href="https://notebook.google.com/notebook/6a945d4a-a7b3-4e95-a769-9f2a6183731d" target="_blank" rel="noopener noreferrer">NotebookLMで質問する</a>
+      </div>
     </section>
   </main>
   <footer>免疫学 · Interactive Lab</footer>
