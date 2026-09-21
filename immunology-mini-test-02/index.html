@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Immunology Interactive Lab-02</title>
+  <style>
+    :root {
+      --bg: #f7f9fc;
+      --card: #ffffff;
+      --border: #d7dce5;
+      --ink: #1a2633;
+      --muted: #5a6978;
+      --primary: #2b6cb0;
+      --accent: #b83030;
+      --ok: #247347;
+    }
+    * { box-sizing: border-box; }
+    [hidden] { display: none !important; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font: 16px/1.7 -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", sans-serif;
+      overflow-wrap: anywhere;
+    }
+    header { padding: 24px 16px; background: linear-gradient(135deg, var(--primary), #1a4a80); color: white; }
+    .header-inner, main, .progress-inner { width: 100%; max-width: 800px; margin: 0 auto; }
+    h1 { font-size: 24px; margin: 0; }
+    header p { font-size: 14px; margin: 4px 0 0; }
+    .quiz-header { position: sticky; top: 0; z-index: 10; background: white; border-bottom: 1px solid var(--border); padding: 12px 16px; }
+    .progress-inner { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 16px; align-items: center; }
+    #quiz-progress { font-size: 14px; }
+    #quiz-score { font-size: 18px; color: var(--primary); }
+    main { padding: 24px 16px; }
+    .lead { color: var(--muted); margin: 0 0 20px; }
+    .card, .q-card { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 16px; margin-bottom: 16px; }
+    .q-num { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 14px; }
+    .q-num { background: var(--primary); color: white; }
+    .q-stem { font-size: 17px; margin: 12px 0 16px; }
+    .q-opts { display: flex; flex-direction: column; gap: 8px; }
+    button { min-height: 44px; font: inherit; cursor: pointer; }
+    button:focus-visible, #quiz-finish:focus-visible { outline: 3px solid var(--primary); outline-offset: 3px; }
+    .q-opt { width: 100%; display: flex; gap: 10px; align-items: flex-start; padding: 12px; border: 1.5px solid var(--border); border-radius: 6px; background: white; color: var(--ink); text-align: left; }
+    .opt-letter { flex: 0 0 24px; font-weight: 700; }
+    .opt-text { min-width: 0; }
+    .q-opt:hover:not(:disabled) { background: #f0f7ff; border-color: var(--primary); }
+    .q-opt:disabled { cursor: default; opacity: 1; }
+    .q-opt.correct { background: #c6f6d5; border-color: var(--ok); }
+    .q-opt.wrong { background: #fed7d7; border-color: var(--accent); }
+    .q-card.answered.correct { border-color: var(--ok); }
+    .q-card.answered.incorrect { border-color: var(--accent); }
+    .q-explain { padding: 12px; margin-top: 16px; border-left: 3px solid var(--primary); background: #f7fafc; border-radius: 4px; }
+    .q-explain p { margin: 8px 0 0; }
+    .quiz-finish { text-align: center; scroll-margin-top: 100px; }
+    .quiz-finish.passed { border: 2px solid var(--ok); background: #f0fff4; }
+    .quiz-finish.failed { border: 2px solid #ad6817; background: #fffaf0; }
+    .quiz-finish h2 { font-size: 22px; margin: 0; }
+    .final-score { font-size: 28px; font-weight: 700; margin: 8px 0; }
+    .btn { border: 1px solid var(--primary); border-radius: 6px; padding: 10px 20px; background: var(--primary); color: white; }
+    .btn:disabled { cursor: default; opacity: 0.6; }
+    .notice { font-size: 14px; color: var(--muted); }
+    .certificate-form { margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border); text-align: left; }
+    .certificate-form label { display: block; font-weight: 700; }
+    .certificate-form input { display: block; width: 100%; min-height: 44px; margin: 8px 0 12px; padding: 10px; border: 1px solid var(--border); border-radius: 6px; font: inherit; background: white; }
+    .certificate-form input:focus-visible { outline: 3px solid var(--primary); outline-offset: 2px; }
+    .certificate-form .btn { width: 100%; }
+    #certificate-error { color: var(--accent); font-size: 14px; }
+    #load-message, #storage-message { padding: 12px; background: #fffaf0; border-left: 3px solid #ad6817; }
+    footer { padding: 20px 16px; text-align: center; font-size: 14px; color: var(--muted); }
+    .tabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; max-width: 800px; margin: 0 auto; padding: 12px 16px 0; }
+    .tabs button { min-width: 0; min-height: 44px; padding: 10px 4px; border: 0; border-bottom: 3px solid transparent; background: white; color: var(--muted); font-size: 14px; }
+    .tabs button[aria-selected="true"] { border-bottom-color: var(--primary); color: var(--primary); font-weight: 700; }
+    .review-title { margin: 0 0 12px; font-size: 22px; }
+    .lecture-questions { padding-left: 24px; margin: 0 0 24px; }
+    .lecture-questions li + li { margin-top: 12px; }
+    .notebook-link { display: flex; align-items: center; justify-content: center; width: 100%; min-height: 52px; text-align: center; text-decoration: none; font-weight: 700; }
+    .notebook-link:not(:disabled):hover { background: #1a4a80; }
+    .notebook-link:focus-visible { outline: 3px solid var(--primary); outline-offset: 3px; }
+    .lecture-overview p { margin: 0; }
+    .lecture-overview p + p { margin-top: 12px; }
+    .flow-list { list-style: none; margin: 0; padding: 0; }
+    .flow-step { min-width: 0; }
+    .flow-button { width: 100%; display: grid; grid-template-columns: 36px minmax(0, 1fr); gap: 4px 12px; align-items: center; padding: 16px; border: 1px solid var(--border); border-radius: 8px; background: var(--card); color: var(--ink); text-align: left; }
+    .flow-button:hover, .flow-button[aria-expanded="true"] { border-color: var(--primary); background: #f0f7ff; }
+    .step-number { grid-row: span 2; display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 50%; background: var(--primary); color: white; font-weight: 700; }
+    .step-title { min-width: 0; font-size: 18px; font-weight: 700; color: var(--primary); }
+    .step-status { font-size: 14px; color: var(--muted); }
+    .flow-details { margin: 8px 0 0; padding: 16px; border-left: 3px solid var(--primary); border-radius: 4px; background: white; }
+    .flow-arrow { display: block; text-align: center; color: var(--primary); font-size: 24px; line-height: 1.5; }
+    @media (min-width: 600px) {
+      .tabs { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+      .q-card { padding: 24px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-inner">
+      <h1>Immunology Interactive Lab-02</h1>
+      <p>皮膚・粘膜バリア、自然免疫、炎症、インターフェロンによる感染防御</p>
+    </div>
+  </header>
+  <nav class="tabs" role="tablist" aria-label="復習ツール">
+    <button type="button" id="tab-innate" role="tab" aria-selected="true" aria-controls="panel-innate">自然免疫の流れ</button>
+    <button type="button" id="tab-neutrophil" role="tab" aria-selected="false" aria-controls="panel-neutrophil" tabindex="-1">好中球の遊走</button>
+    <button type="button" id="tab-antiviral" role="tab" aria-selected="false" aria-controls="panel-antiviral" tabindex="-1">抗ウイルス応答</button>
+    <button type="button" id="tab-quiz" role="tab" aria-selected="false" aria-controls="panel-quiz" tabindex="-1">復習クイズ</button>
+    <button type="button" id="tab-questions" role="tab" aria-selected="false" aria-controls="panel-questions" tabindex="-1">講義について質問</button>
+  </nav>
+  <main>
+    <noscript><p class="card">このアプリを利用するには、ブラウザのJavaScriptを有効にしてください。</p></noscript>
+    <section id="panel-innate" role="tabpanel" aria-labelledby="tab-innate">
+      <h2 class="review-title">自然免疫の流れ</h2>
+      <div class="card lecture-overview">
+        <p>この回では、病原体の侵入を防ぐ皮膚や粘膜のバリアと、侵入した病原体にすばやく対応する自然免疫を学ぶ。</p>
+        <p>マクロファージや好中球が微生物を認識し、取り込んで排除するしくみを理解する。</p>
+        <p>また、サイトカインやケモカインを介した炎症反応、好中球の感染部位への遊走、インターフェロンによるウイルス感染防御について学ぶ。</p>
+      </div>
+      <p class="lead">上から順に確認しましょう。各段階をタップすると説明が開き、もう一度タップすると閉じます。</p>
+      <ol class="flow-list" id="innate-list"></ol>
+    </section>
+    <section id="panel-neutrophil" role="tabpanel" aria-labelledby="tab-neutrophil" hidden>
+      <h2 class="review-title">好中球の遊走</h2>
+      <p class="lead">上から順に確認しましょう。各段階をタップすると説明が開き、もう一度タップすると閉じます。</p>
+      <ol class="flow-list" id="neutrophil-list"></ol>
+    </section>
+    <section id="panel-antiviral" role="tabpanel" aria-labelledby="tab-antiviral" hidden>
+      <h2 class="review-title">インターフェロンによる抗ウイルス応答</h2>
+      <p class="lead">上から順に確認しましょう。各段階をタップすると説明が開き、もう一度タップすると閉じます。</p>
+      <ol class="flow-list" id="antiviral-list"></ol>
+    </section>
+    <section id="panel-quiz" role="tabpanel" aria-labelledby="tab-quiz" hidden>
+  <div class="quiz-header" role="status" aria-live="polite" aria-atomic="true">
+    <div class="progress-inner">
+      <span id="quiz-progress">0 / 6 問回答済み</span>
+      <strong id="quiz-score">得点：0 / 6 点</strong>
+    </div>
+  </div>
+    <p class="lead">正しい選択肢を1つ選んでください。選ぶとすぐに採点し、解説を表示します。回答後の変更はできません。</p>
+    <p class="notice">1問1点。6問中5問以上正解（正答率80%以上）で合格です。</p>
+    <p id="load-message" role="status">問題を読み込んでいます。</p>
+    <noscript><p>クイズを利用するには、ブラウザのJavaScriptを有効にしてください。</p></noscript>
+    <p id="storage-message" role="status" hidden></p>
+    <div id="quiz-list"></div>
+    <section class="quiz-finish card" id="quiz-finish" tabindex="-1" aria-labelledby="quiz-finish-title" hidden>
+      <h2 id="quiz-finish-title">結果</h2>
+      <p class="final-score" id="quiz-finish-score"></p>
+      <p id="quiz-finish-msg"></p>
+      <form class="certificate-form" id="certificate-form" hidden novalidate>
+        <label for="student-number">学籍番号</label>
+        <input id="student-number" type="text" maxlength="64" autocomplete="off" spellcheck="false" required aria-describedby="certificate-note certificate-error">
+        <p id="certificate-error" role="alert" hidden></p>
+        <button class="btn" type="submit">修了証 PDF を出力</button>
+        <p class="notice" id="certificate-note">別ウィンドウの印刷画面で「PDFとして保存」を選んでください。学籍番号は修了証の作成にのみ使用し、ブラウザへの保存や外部送信は行いません。</p>
+      </form>
+    </section>
+    <button class="btn" id="quiz-reset" type="button" disabled>クイズをリセット</button>
+    <p class="notice">このブラウザに回答状況を保存し、再読み込み後も続きから再開します。リセットすると回答を消去し、問題の順番だけを並べ直します。選択肢の順番は変わりません。</p>
+    </section>
+    <section id="panel-questions" role="tabpanel" aria-labelledby="tab-questions" hidden>
+      <div class="card">
+        <h2 class="review-title">講義について質問する</h2>
+        <p class="lead">この講義の内容について、分からないことを自由に質問できます。<br>第2回の講義資料、Student Notes、免疫学教科書をもとにGemini Notebookが回答します。</p>
+        <p><strong>質問例：</strong></p>
+        <ul class="lecture-questions">
+          <li>マクロファージや好中球は、病原体をどのように見分けて取り込むのですか？</li>
+          <li>好中球は、どのように血管の外へ出て感染部位に集まるのですか？</li>
+          <li>インターフェロンは、ウイルスの増殖をどのように抑えるのですか？</li>
+        </ul>
+        <button type="button" class="btn notebook-link" id="notebook-placeholder" disabled>Gemini Notebookで質問する</button>
+        <a class="btn notebook-link" id="notebook-link" target="_blank" rel="noopener noreferrer" hidden>Gemini Notebookで質問する</a>
+        <p class="notice" id="notebook-notice">Gemini Notebookのリンクは準備中です。</p>
+      </div>
+    </section>
+  </main>
+  <footer>免疫学 · Interactive Lab</footer>
+  <script type="module">
+    // タブ切り替えではクイズを再生成せず、回答と入力内容を維持します。
+    const tabs = [...document.querySelectorAll('[role="tab"]')];
+    function selectTab(selected) {
+      tabs.forEach(tab => {
+        const active = tab === selected;
+        tab.setAttribute('aria-selected', String(active));
+        tab.tabIndex = active ? 0 : -1;
+        document.getElementById(tab.getAttribute('aria-controls')).hidden = !active;
+      });
+    }
+    tabs.forEach((tab, index) => {
+      tab.addEventListener('click', () => selectTab(tab));
+      tab.addEventListener('keydown', event => {
+        let next;
+        if (event.key === 'ArrowRight') next = (index + 1) % tabs.length;
+        if (event.key === 'ArrowLeft') next = (index + tabs.length - 1) % tabs.length;
+        if (event.key === 'Home') next = 0;
+        if (event.key === 'End') next = tabs.length - 1;
+        if (next === undefined) return;
+        event.preventDefault();
+        selectTab(tabs[next]);
+        tabs[next].focus();
+      });
+    });
+
+    // 第2回専用のURLを受け取ったら、この定数だけを差し替えます。
+    const NOTEBOOKLM_URL = 'https://notebook.google.com/notebook/6a9f8f2a-c78d-4618-a203-6eb05bbf6861';
+    if (NOTEBOOKLM_URL.trim()) {
+      try {
+        const url = new URL(NOTEBOOKLM_URL);
+        if (url.protocol !== 'https:') throw new Error('HTTPSのURLを設定してください。');
+        const link = document.getElementById('notebook-link');
+        link.href = url.href;
+        link.hidden = false;
+        document.getElementById('notebook-placeholder').hidden = true;
+        document.getElementById('notebook-notice').hidden = true;
+      } catch (error) {
+        document.getElementById('notebook-notice').textContent = 'Gemini Notebookのリンクは準備中です。';
+      }
+    }
+
+    // 説明原稿を受け取ったら、対応する段階のdescriptionに原文を設定します。
+    // 未提供の科学的説明は補わず、準備中と表示します。
+    const FLOWS = {
+      'innate-list': [
+        { title: '病原体侵入', description: '皮膚や粘膜のバリア、共生微生物は、外来微生物の侵入を防いでいます。これらの防御を突破して侵入した微生物に対して、マクロファージや好中球などの自然免疫系が対応します。' },
+        { title: '病原体の認識', description: 'マクロファージや好中球は、パターン認識受容体を使って微生物に特徴的な成分を認識します。自然免疫では、複数のパターン認識受容体が病原体の認識に働きます。' },
+        { title: '炎症反応', description: '微生物を認識して活性化したマクロファージは、TNF-α、IL-1β、IL-6などの炎症性サイトカインを分泌します。これらの働きによって、感染部位に炎症反応が起こります。' },
+        { title: '好中球・単球の動員', description: 'ケモカインは、血液中の好中球や単球を感染・炎症部位へ呼び寄せます。好中球や単球は血管の外へ出て、感染した組織に集まります。' },
+        { title: '貪食・殺菌', description: 'マクロファージは微生物を取り込み、ファゴソームとリソソームが融合したファゴリソソーム内で分解します。好中球も微生物を貪食し、顆粒内の抗菌物質や活性酸素を使って殺菌します。' },
+        { title: '病原体の排除', description: 'マクロファージや好中球による貪食・殺菌によって、侵入した微生物の排除が進みます。' }
+      ],
+      'neutrophil-list': [
+        { title: '血管内皮の活性化', description: '活性化したマクロファージが産生するTNF-αは、血管内皮細胞に作用します。これにより、E-セレクチンなどの細胞接着分子の発現が促されます。' },
+        { title: 'ローリング', description: '血管内皮のE-セレクチンが、好中球表面の糖鎖であるシアリルルイスXと結合します。好中球は結合と解離を繰り返し、血管内皮の表面を転がるように移動します。' },
+        { title: '接着', description: 'ケモカインの刺激を受けると、好中球のインテグリンであるLFA-1が、血管内皮のICAM-1と強く結合します。これにより、好中球が血管内皮にしっかりと接着します。' },
+        { title: '血管外遊走', description: '血管内皮に接着した好中球は、内皮細胞どうしの間を通り抜け、血管の外の組織へ移動します。' },
+        { title: 'ケモカインに沿った感染部位への移動', description: '血管の外へ出た好中球は、CXCL8（IL-8）などのケモカインに導かれて組織内を移動し、感染部位に向かいます。' }
+      ],
+      'antiviral-list': [
+        { title: 'ウイルス感染', description: 'ウイルスが細胞に感染すると、細胞質のRIG-IやMDA-5などの受容体がウイルスを認識し、インターフェロン産生につながる反応が始まります。' },
+        { title: 'I型インターフェロン産生', description: 'ウイルスの認識によってIFN-βの産生が誘導され、IFN-βが産生細胞自身に作用するとIFN-αの産生も誘導されます。IFN-αとIFN-βは、I型インターフェロンと呼ばれます。' },
+        { title: '周囲の細胞への作用', description: '感染細胞から分泌されたI型インターフェロンは、周囲の非感染細胞の受容体に結合します。これにより、周囲の細胞でもインターフェロン応答が起こります。' },
+        { title: '抗ウイルス遺伝子の誘導', description: 'インターフェロン応答によって抗ウイルス作用を担う遺伝子の発現が誘導され、ウイルスRNAの分解やウイルスタンパク質の合成阻害を促す酵素群が作られます。' },
+        { title: 'ウイルス増殖の抑制', description: '誘導された酵素群の働きにより、ウイルスRNAの分解やウイルスタンパク質の合成阻害が進み、ウイルスの増殖が抑えられます。' }
+      ]
+    };
+    Object.entries(FLOWS).forEach(([listId, steps]) => {
+      const list = document.getElementById(listId);
+      const controls = [];
+      function setOpen(control, open) {
+        control.button.setAttribute('aria-expanded', String(open));
+        control.status.textContent = open ? '表示中' : '説明を開く';
+        control.details.hidden = !open;
+      }
+      steps.forEach((step, index) => {
+        const item = document.createElement('li');
+        item.className = 'flow-step';
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'flow-button';
+        button.id = `${listId}-step-${index}`;
+        const number = document.createElement('span');
+        number.className = 'step-number';
+        number.textContent = String(index + 1);
+        const title = document.createElement('span');
+        title.className = 'step-title';
+        title.textContent = step.title;
+        const status = document.createElement('span');
+        status.className = 'step-status';
+        const details = document.createElement('div');
+        details.className = 'flow-details';
+        details.id = `${listId}-details-${index}`;
+        details.setAttribute('role', 'region');
+        details.setAttribute('aria-labelledby', button.id);
+        details.textContent = step.description || '説明文は準備中です';
+        button.setAttribute('aria-controls', details.id);
+        button.append(number, title, status);
+        const control = { button, status, details };
+        controls.push(control);
+        setOpen(control, false);
+        button.addEventListener('click', () => {
+          const open = button.getAttribute('aria-expanded') !== 'true';
+          controls.forEach(other => setOpen(other, other === control && open));
+        });
+        item.append(button, details);
+        if (index < steps.length - 1) {
+          const arrow = document.createElement('span');
+          arrow.className = 'flow-arrow';
+          arrow.textContent = '↓';
+          arrow.setAttribute('aria-hidden', 'true');
+          item.appendChild(arrow);
+        }
+        list.appendChild(item);
+      });
+    });
+
+    const loadMessage = document.getElementById('load-message');
+    try {
+      const { QUIZ } = await import('./quiz-data.js');
+      if (!Array.isArray(QUIZ)) throw new Error('問題データが不正です。');
+      if (QUIZ.length === 0) {
+        loadMessage.textContent = '復習クイズは準備中です';
+      } else {
+        if (!QUIZ.every(question => question &&
+            typeof question.stem === 'string' && question.stem.trim() &&
+            Array.isArray(question.options) && question.options.length === 4 &&
+            question.options.every(option => typeof option === 'string' && option.trim()) &&
+            Number.isInteger(question.correct) && question.correct >= 0 && question.correct < 4 &&
+            typeof question.explain === 'string' && question.explain.trim())) {
+          throw new Error('問題データが不正です。');
+        }
+        startQuiz(QUIZ);
+        loadMessage.hidden = true;
+      }
+    } catch (error) {
+      loadMessage.textContent = location.protocol === 'file:'
+        ? 'このクイズはHTMLファイルを直接開くと問題を読み込めません。GitHub Pages、またはローカルプレビューのURLから開いてください。'
+        : '問題を読み込めませんでした。通信状況と、同じフォルダの quiz-data.js の内容を確認して、再読み込みしてください。';
+    }
+
+    function startQuiz(QUIZ) {
+      const STORAGE_KEY = 'immunology_quiz_02_v1';
+      const signature = JSON.stringify(QUIZ);
+      const LETTERS = ['A', 'B', 'C', 'D'];
+      const list = document.getElementById('quiz-list');
+      const finish = document.getElementById('quiz-finish');
+      const storageMessage = document.getElementById('storage-message');
+      const certificateForm = document.getElementById('certificate-form');
+      const studentNumber = document.getElementById('student-number');
+      const certificateError = document.getElementById('certificate-error');
+      let restoreNotice = '';
+      let state = loadState();
+
+      function newState() {
+        const order = QUIZ.map((_, i) => i);
+        // 問題順だけを新規開始・リセット時に並べ替えます。選択肢順は固定です。
+        for (let i = order.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [order[i], order[j]] = [order[j], order[i]];
+        }
+        return { signature, order, answers: QUIZ.map(() => null) };
+      }
+
+      function loadState() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if (raw === null) return newState();
+          const saved = JSON.parse(raw);
+          // 問題データの一致と、順序・回答の範囲を検証してから復元します。
+          if (saved && saved.signature === signature &&
+              Array.isArray(saved.order) && saved.order.length === QUIZ.length &&
+              new Set(saved.order).size === QUIZ.length &&
+              saved.order.every(i => Number.isInteger(i) && i >= 0 && i < QUIZ.length) &&
+              Array.isArray(saved.answers) && saved.answers.length === QUIZ.length &&
+              saved.answers.every(a => a === null || (Number.isInteger(a) && a >= 0 && a < 4))) {
+            return { signature, order: saved.order, answers: saved.answers };
+          }
+          restoreNotice = '問題の更新または保存データの不整合があるため、第2回のクイズを最初から開始します。';
+        } catch (error) {
+          restoreNotice = '保存した回答を読み込めないため、第2回のクイズを最初から開始します。';
+        }
+        return newState();
+      }
+
+      function saveState() {
+        try {
+          // 学籍番号や得点は保存せず、問題ごとの回答から得点を計算します。
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+          storageMessage.textContent = restoreNotice;
+          storageMessage.hidden = !restoreNotice;
+        } catch (error) {
+          storageMessage.textContent = [restoreNotice, 'このブラウザでは回答を保存できません。クイズは続けられますが、再読み込みすると今回の回答が失われる場合があります。'].filter(Boolean).join(' ');
+          storageMessage.hidden = false;
+        }
+      }
+
+      function updateSummary() {
+        const done = state.answers.filter(a => a !== null).length;
+        const score = state.answers.filter((a, i) => a === QUIZ[i].correct).length;
+        document.getElementById('quiz-progress').textContent = `${done} / ${QUIZ.length} 問回答済み`;
+        document.getElementById('quiz-score').textContent = `得点：${score} / ${QUIZ.length} 点`;
+        finish.hidden = done !== QUIZ.length;
+        certificateForm.hidden = done !== QUIZ.length || score / QUIZ.length < 0.8;
+        if (certificateForm.hidden) {
+          certificateForm.reset();
+          certificateError.hidden = true;
+          studentNumber.removeAttribute('aria-invalid');
+        }
+        if (!finish.hidden) {
+          const passed = score / QUIZ.length >= 0.8;
+          finish.classList.toggle('passed', passed);
+          finish.classList.toggle('failed', !passed);
+          document.getElementById('quiz-finish-title').textContent = passed ? '結果：合格' : '結果：不合格';
+          document.getElementById('quiz-finish-score').textContent = `${score} / ${QUIZ.length} 点（正答率 ${Math.round(score / QUIZ.length * 100)}%）`;
+          document.getElementById('quiz-finish-msg').textContent = passed
+            ? '合格基準を達成しました。各問題の解説も確認しましょう。'
+            : '合格には5問以上の正解が必要です。解説を確認し、リセットして再挑戦できます。';
+        }
+      }
+
+      function updateCard(card, qi) {
+        const answer = state.answers[qi];
+        if (answer === null) return;
+        const question = QUIZ[qi];
+        const correct = answer === question.correct;
+        card.classList.add('answered', correct ? 'correct' : 'incorrect');
+        card.querySelectorAll('.q-opt').forEach((button, displayIndex) => {
+          const oi = displayIndex;
+          button.disabled = true;
+          button.classList.toggle('correct', oi === question.correct);
+          button.classList.toggle('wrong', oi === answer && !correct);
+        });
+        const explain = card.querySelector('.q-explain');
+        explain.hidden = false;
+        explain.querySelector('strong').textContent = `${correct ? '正解です。' : '不正解です。'} あなたの回答：${LETTERS[answer]} ／ 正解：${LETTERS[question.correct]}`;
+      }
+
+      function renderQuiz() {
+        list.replaceChildren();
+        state.order.forEach((qi, position) => {
+          const question = QUIZ[qi];
+          const card = document.createElement('section');
+          card.className = 'q-card';
+          card.dataset.qi = qi;
+          card.setAttribute('aria-labelledby', `question-${qi}`);
+          card.innerHTML = '<div><span class="q-num"></span></div><h2 class="q-stem"></h2><div class="q-opts"></div><div class="q-explain" aria-live="polite" hidden><strong></strong><p></p></div>';
+          card.querySelector('.q-num').textContent = `問 ${position + 1}`;
+          const stem = card.querySelector('.q-stem');
+          stem.id = `question-${qi}`;
+          stem.textContent = question.stem;
+          card.querySelector('.q-explain p').textContent = `解説：${question.explain}`;
+          // 原稿のA〜Dの順番を保ち、選択肢番号をそのまま回答に記録します。
+          question.options.forEach((option, oi) => {
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = 'q-opt';
+            button.innerHTML = '<span class="opt-letter"></span><span class="opt-text"></span>';
+            button.querySelector('.opt-letter').textContent = `${LETTERS[oi]}.`;
+            button.querySelector('.opt-text').textContent = option;
+            button.addEventListener('click', () => {
+              if (state.answers[qi] !== null) return;
+              state.answers[qi] = oi;
+              updateCard(card, qi);
+              updateSummary();
+              saveState();
+              if (!finish.hidden) finish.focus();
+            });
+            card.querySelector('.q-opts').appendChild(button);
+          });
+          updateCard(card, qi);
+          list.appendChild(card);
+        });
+        updateSummary();
+      }
+
+      // 入力値はHTMLとして解釈させず、修了証の文字として表示します。
+      function escapeHTML(value) {
+        return String(value).replace(/[&<>"']/g, character => ({
+          '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+        })[character]);
+      }
+
+      // 検証コードは同じ学籍番号・得点・日付から再現できる照合用です。
+      // 秘密鍵を使わないため、本人認証や改ざんの証明には使用できません。
+      function verificationCode(number, score, date) {
+        let hash = 2166136261;
+        const bytes = new TextEncoder().encode(JSON.stringify([number, score, date]));
+        for (const byte of bytes) hash = Math.imul(hash ^ byte, 16777619);
+        return (hash >>> 0).toString(16).toUpperCase().padStart(8, '0');
+      }
+
+      studentNumber.addEventListener('input', () => {
+        certificateError.hidden = true;
+        studentNumber.removeAttribute('aria-invalid');
+      });
+
+      certificateForm.addEventListener('submit', event => {
+        event.preventDefault();
+        // 表示状態だけに頼らず、出力時にも全問回答と合格を確認します。
+        const score = state.answers.filter((answer, i) => answer === QUIZ[i].correct).length;
+        if (state.answers.some(answer => answer === null) || score / QUIZ.length < 0.8) return;
+        const number = studentNumber.value.trim();
+        if (!number) {
+          certificateError.textContent = '学籍番号を入力してください。';
+          certificateError.hidden = false;
+          studentNumber.setAttribute('aria-invalid', 'true');
+          studentNumber.focus();
+          return;
+        }
+        certificateError.hidden = true;
+        const now = new Date();
+        const date = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+        const code = verificationCode(number, score, date);
+        const printHTML = `<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>免疫学ミニテスト 第2回 修了証</title>
+<style>
+  @page { size: A4 portrait; margin: 20mm; }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 16px; background: #f7f9fc; color: #1a2633; font: 16px/1.7 -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", sans-serif; overflow-wrap: anywhere; }
+  .certificate { width: 100%; max-width: 170mm; margin: 0 auto; padding: 24px; border: 2px solid #2b6cb0; background: white; }
+  h1 { margin: 0 0 32px; font-size: 24px; text-align: center; color: #1a4a80; }
+  .intro { margin-bottom: 28px; }
+  dl { margin: 0; }
+  dl > div { display: grid; grid-template-columns: 5em minmax(0, 1fr); gap: 12px; padding: 12px 0; border-bottom: 1px solid #d7dce5; }
+  dt { font-weight: 700; }
+  dd { margin: 0; }
+  .code { font-family: monospace; letter-spacing: 1px; }
+  .print-controls { max-width: 170mm; margin: 16px auto; font-size: 14px; }
+  button { min-height: 44px; padding: 10px 20px; font: inherit; color: white; background: #2b6cb0; border: 0; border-radius: 6px; cursor: pointer; }
+  @media print {
+    body { padding: 0; background: white; }
+    .certificate { max-width: none; padding: 12mm; break-inside: avoid; }
+    .print-controls { display: none; }
+  }
+</style>
+</head>
+<body>
+<main class="certificate">
+  <h1>免疫学ミニテスト 第2回 修了証</h1>
+  <p class="intro">免疫学ミニテスト 第2回の全6問に回答し、合格基準（正答率80%以上）を達成しました。</p>
+  <dl>
+    <div><dt>講義名</dt><dd>免疫学</dd></div>
+    <div><dt>回</dt><dd>第2回</dd></div>
+    <div><dt>学籍番号</dt><dd>${escapeHTML(number)}</dd></div>
+    <div><dt>得点</dt><dd>${QUIZ.length}問中${score}問正解</dd></div>
+    <div><dt>正答率</dt><dd>${Math.round(score / QUIZ.length * 100)}%</dd></div>
+    <div><dt>日付</dt><dd>${date}</dd></div>
+    <div><dt>検証コード</dt><dd class="code">${code}</dd></div>
+  </dl>
+</main>
+<div class="print-controls">
+  <p>印刷画面で「PDFとして保存」を選んでください。自動で開かない場合は、下のボタンを押してください。</p>
+  <button type="button" id="print-again">印刷画面を開く</button>
+</div>
+<script>
+  document.getElementById('print-again').addEventListener('click', () => window.print());
+  // 読み込みとフォントの準備、描画を待ってから印刷します。
+  window.addEventListener('load', async () => {
+    await document.fonts.ready;
+    requestAnimationFrame(() => requestAnimationFrame(() => window.print()));
+  });
+<\/script>
+</body>
+</html>`;
+        const url = URL.createObjectURL(new Blob([printHTML], { type: 'text/html;charset=utf-8' }));
+        const printWindow = window.open(url, '_blank');
+        if (!printWindow) {
+          URL.revokeObjectURL(url);
+          certificateError.textContent = '修了証を開けませんでした。このサイトのポップアップを許可して、もう一度出力してください。';
+          certificateError.hidden = false;
+          return;
+        }
+        printWindow.opener = null;
+        // 印刷中や再印刷時の読み込みを妨げないよう、閉じた後に解放します。
+        const closeTimer = setInterval(() => {
+          if (printWindow.closed) {
+            clearInterval(closeTimer);
+            URL.revokeObjectURL(url);
+          }
+        }, 1000);
+      });
+
+      document.getElementById('quiz-reset').addEventListener('click', () => {
+        restoreNotice = '';
+        state = newState();
+        saveState();
+        renderQuiz();
+        window.scrollTo(0, 0);
+      });
+      renderQuiz();
+      saveState();
+      document.getElementById('quiz-reset').disabled = false;
+    }
+  </script>
+</body>
+</html>
