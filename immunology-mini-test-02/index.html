@@ -133,12 +133,12 @@
     <section id="panel-quiz" role="tabpanel" aria-labelledby="tab-quiz" hidden>
   <div class="quiz-header" role="status" aria-live="polite" aria-atomic="true">
     <div class="progress-inner">
-      <span id="quiz-progress">0 / 6 問回答済み</span>
-      <strong id="quiz-score">得点：0 / 6 点</strong>
+      <span id="quiz-progress"></span>
+      <strong id="quiz-score"></strong>
     </div>
   </div>
     <p class="lead">正しい選択肢を1つ選んでください。選ぶとすぐに採点し、解説を表示します。回答後の変更はできません。</p>
-    <p class="notice">1問1点。6問中5問以上正解（正答率80%以上）で合格です。</p>
+    <p class="notice" id="quiz-rule"></p>
     <p id="load-message" role="status">問題を読み込んでいます。</p>
     <noscript><p>クイズを利用するには、ブラウザのJavaScriptを有効にしてください。</p></noscript>
     <p id="storage-message" role="status" hidden></p>
@@ -376,6 +376,11 @@
       function updateSummary() {
         const done = state.answers.filter(a => a !== null).length;
         const score = state.answers.filter((a, i) => a === QUIZ[i].correct).length;
+        const totalLabel = document.getElementById('quiz-total');
+        if (totalLabel) totalLabel.textContent = `全${QUIZ.length}問`;
+        const ruleLabel = document.getElementById('quiz-rule');
+        if (ruleLabel) ruleLabel.textContent =
+          `1問1点。${QUIZ.length}問中${Math.ceil(QUIZ.length * 0.8)}問以上正解（正答率80%以上）で合格です。`;
         document.getElementById('quiz-progress').textContent = `${done} / ${QUIZ.length} 問回答済み`;
         document.getElementById('quiz-score').textContent = `得点：${score} / ${QUIZ.length} 点`;
         finish.hidden = done !== QUIZ.length;
@@ -520,7 +525,7 @@
 <body>
 <main class="certificate">
   <h1>免疫学ミニテスト 第2回 修了証</h1>
-  <p class="intro">免疫学ミニテスト 第2回の全6問に回答し、合格基準（正答率80%以上）を達成しました。</p>
+  <p class="intro">免疫学ミニテスト 第2回の全${QUIZ.length}問に回答し、合格基準（正答率80%以上）を達成しました。</p>
   <dl>
     <div><dt>講義名</dt><dd>免疫学</dd></div>
     <div><dt>回</dt><dd>第2回</dd></div>
