@@ -92,7 +92,7 @@
     .notebook-link:hover { background: #1a4a80; }
     .notebook-link:focus-visible { outline: 3px solid var(--primary); outline-offset: 3px; }
     @media (min-width: 600px) {
-      .tabs { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+      .tabs { grid-template-columns: repeat(5, minmax(0, 1fr)); }
       .q-card { padding: 24px; }
       .review-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     }
@@ -109,6 +109,7 @@
     <button type="button" id="tab-cells" role="tab" aria-selected="true" aria-controls="panel-cells">免疫細胞</button>
     <button type="button" id="tab-cytokines" role="tab" aria-selected="false" aria-controls="panel-cytokines" tabindex="-1">サイトカイン</button>
     <button type="button" id="tab-quiz" role="tab" aria-selected="false" aria-controls="panel-quiz" tabindex="-1">復習クイズ</button>
+    <button type="button" id="tab-survey" role="tab" aria-selected="false" aria-controls="panel-survey" tabindex="-1">授業アンケート</button>
     <button type="button" id="tab-questions" role="tab" aria-selected="false" aria-controls="panel-questions" tabindex="-1">講義について質問</button>
   </nav>
   <main>
@@ -148,10 +149,16 @@
         <p class="notice">「修了証 PDF を出力」でPDFを保存し、「修了証を提出する」からK-LMSの課題提出画面でPDFをアップロードしてください。</p>
         <p class="notice" id="certificate-note">別ウィンドウの印刷画面で「PDFとして保存」を選んでください。学籍番号は修了証の作成にのみ使用し、ブラウザへの保存や外部送信は行いません。</p>
       </form>
-      <a class="btn lms-link survey-link" href="https://lms.keio.jp/courses/151918/assignments/1320730" target="_blank" rel="noopener noreferrer">アンケートに回答する</a>
     </section>
     <button class="btn" id="quiz-reset" type="button" disabled>クイズをリセット</button>
     <p class="notice">このブラウザに回答状況を保存し、再読み込み後も続きから再開します。リセットすると回答を消去し、問題の順番を並べ直します。</p>
+    </section>
+    <section id="panel-survey" role="tabpanel" aria-labelledby="tab-survey" hidden>
+      <div class="card">
+        <h2 class="review-title">授業アンケート</h2>
+        <p class="lead">今回の授業について、アンケートへの回答をお願いします。<br>今後の授業改善の参考にします。</p>
+        <a class="btn lms-link survey-link" href="https://lms.keio.jp/courses/151918/assignments/1320730" target="_blank" rel="noopener noreferrer">授業アンケートに回答する</a>
+      </div>
     </section>
     <section id="panel-questions" role="tabpanel" aria-labelledby="tab-questions" hidden>
       <div class="card">
