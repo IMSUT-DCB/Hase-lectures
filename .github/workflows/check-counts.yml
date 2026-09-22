@@ -1,0 +1,18 @@
+name: check-counts
+
+# 問題数の直書きが混ざった push を止めます。
+# GitHub Pages の公開には影響しません（このリポジトリの Pages は main ブランチから直接
+# 公開する legacy build で、Actions を経由していないため）。
+on:
+  push:
+  pull_request:
+
+jobs:
+  check-counts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: チェッカー自身の動作確認
+        run: node .github/check_counts.mjs --selftest
+      - name: 問題数の直書きを検査
+        run: node .github/check_counts.mjs
