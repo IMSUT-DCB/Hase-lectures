@@ -127,16 +127,16 @@
     </div>
   </header>
   <nav class="tabs" role="tablist" aria-label="復習ツール">
-    <button type="button" id="tab-activation" role="tab" aria-selected="true" aria-controls="panel-activation">補体の活性化</button>
+    <button type="button" id="tab-videos" role="tab" aria-selected="true" aria-controls="panel-videos">講義動画</button>
+    <button type="button" id="tab-activation" role="tab" aria-selected="false" aria-controls="panel-activation" tabindex="-1">補体の活性化</button>
     <button type="button" id="tab-functions" role="tab" aria-selected="false" aria-controls="panel-functions" tabindex="-1">補体のはたらき</button>
     <button type="button" id="tab-antibody" role="tab" aria-selected="false" aria-controls="panel-antibody" tabindex="-1">抗体の構造と機能</button>
     <button type="button" id="tab-quiz" role="tab" aria-selected="false" aria-controls="panel-quiz" tabindex="-1">復習クイズ</button>
     <button type="button" id="tab-questions" role="tab" aria-selected="false" aria-controls="panel-questions" tabindex="-1">講義について質問</button>
-    <button type="button" id="tab-videos" role="tab" aria-selected="false" aria-controls="panel-videos" tabindex="-1">講義動画</button>
   </nav>
   <main>
     <noscript><p class="card">このアプリを利用するには、ブラウザのJavaScriptを有効にしてください。</p></noscript>
-    <section id="panel-activation" role="tabpanel" aria-labelledby="tab-activation">
+    <section id="panel-activation" role="tabpanel" aria-labelledby="tab-activation" hidden>
       <h2 class="review-title">補体の活性化</h2>
       <div class="card lecture-overview"><p>この回では、血液や体液中で働く補体と抗体を中心に、体を感染から守るしくみを学びます。</p><p>補体が活性化する3つの経路と、病原体を取り込みやすくする働き、炎症を促す働き、病原体の膜を壊す働きを理解します。</p><p>抗体については、抗原を見分ける部分と、ほかの免疫細胞などに働きかける部分の役割を、基本構造と結びつけて学びます。</p><p>あわせて、NK細胞による感染細胞の排除や、抗体を介したエフェクター機能について学びます。</p></div>
       <p class="lead">各経路をタップして説明を開き、始まり方を比較しましょう。複数の説明を同時に開けます。</p>
@@ -217,7 +217,7 @@
         <a class="btn notebook-link" id="notebook-link" href="https://notebook.google.com/notebook/066c923b-43ce-422f-86fa-d5b7637f66b8" target="_blank" rel="noopener noreferrer">Gemini Notebookで質問する</a>
       </div>
     </section>
-    <section id="panel-videos" role="tabpanel" aria-labelledby="tab-videos" hidden>
+    <section id="panel-videos" role="tabpanel" aria-labelledby="tab-videos">
       <div class="card">
         <h2 class="review-title">第3回 講義動画</h2>
         <p class="lead">第3回の講義動画をPart 1、Part 2の順に視聴してください。</p>
