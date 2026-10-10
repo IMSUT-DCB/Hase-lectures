@@ -89,9 +89,14 @@
     .switch-targets > div { padding: 16px 8px; border: 2px solid var(--primary); border-radius: 8px; text-align: center; font-weight: 700; background: #f0f7ff; }
     .switch-summary { font-weight: 700; }
     .notebook-link { display: block; width: 100%; min-height: 52px; font-weight: 700; }
+    .lms-link { display: flex; align-items: center; justify-content: center; width: 100%; min-height: 52px; text-decoration: none; text-align: center; font-weight: 700; }
+    .lms-link:focus-visible { outline: 3px solid var(--primary); outline-offset: 3px; }
+    .lecture-survey-link:hover { background: #1a4a80; }
+    .certificate-submit { background: #b45309; border-color: #b45309; }
+    .certificate-submit:hover { background: #92400e; }
     h3 { font-size: 18px; }
     @media (min-width: 600px) {
-      .tabs { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+      .tabs { grid-template-columns: repeat(6, minmax(0, 1fr)); }
       .tool-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .class-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); }
       .q-card { padding: 24px; }
@@ -107,7 +112,8 @@
     <button type="button" id="tab-diversity" role="tab" aria-selected="true" aria-controls="panel-diversity">抗体の多様性</button>
     <button type="button" id="tab-classes" role="tab" aria-selected="false" aria-controls="panel-classes" tabindex="-1">クラススイッチと抗体クラス</button>
     <button type="button" id="tab-maturity" role="tab" aria-selected="false" aria-controls="panel-maturity" tabindex="-1">B細胞の成熟と選択</button>
-    <button type="button" id="tab-quiz" role="tab" aria-selected="false" aria-controls="panel-quiz" tabindex="-1">復習クイズ</button>
+    <button type="button" id="tab-quiz" role="tab" aria-selected="false" aria-controls="panel-quiz" tabindex="-1">復習テスト</button>
+    <button type="button" id="tab-survey" role="tab" aria-selected="false" aria-controls="panel-survey" tabindex="-1">授業アンケート</button>
     <button type="button" id="tab-questions" role="tab" aria-selected="false" aria-controls="panel-questions" tabindex="-1">講義について質問</button>
   </nav>
   <main>
@@ -183,11 +189,20 @@
         <input id="student-number" type="text" maxlength="64" autocomplete="off" spellcheck="false" required aria-describedby="certificate-note certificate-error">
         <p id="certificate-error" role="alert" hidden></p>
         <button class="btn" type="submit">修了証 PDF を出力</button>
+        <p class="notice">修了証PDFを保存した後、下のボタンからK-LMSへ提出してください。</p>
+        <a class="btn lms-link certificate-submit" id="quiz-submit-link" href="https://lms.keio.jp/courses/151918/assignments/1333910?module_item_id=6577358" target="_blank" rel="noopener noreferrer">📤 クイズを提出</a>
         <p class="notice" id="certificate-note">別ウィンドウの印刷画面で「PDFとして保存」を選んでください。学籍番号は修了証の作成にのみ使用し、ブラウザへの保存や外部送信は行いません。</p>
       </form>
     </section>
     <button class="btn" id="quiz-reset" type="button" disabled>クイズをリセット</button>
     <p class="notice">このブラウザに回答状況を保存し、再読み込み後も続きから再開します。リセットすると回答を消去し、問題の順番だけを並べ直します。選択肢の順番は変わりません。</p>
+    </section>
+    <section id="panel-survey" role="tabpanel" aria-labelledby="tab-survey" hidden>
+      <div class="card">
+        <h2 class="review-title">授業アンケート</h2>
+        <p class="lead">第4回の授業アンケートにご協力ください。</p>
+        <a class="btn lms-link lecture-survey-link" id="lecture-survey-link" href="https://lms.keio.jp/courses/151918/assignments/1333911?module_item_id=6577359" target="_blank" rel="noopener noreferrer">📝 授業アンケートに回答</a>
+      </div>
     </section>
     <section id="panel-questions" role="tabpanel" aria-labelledby="tab-questions" hidden>
       <div class="card">
