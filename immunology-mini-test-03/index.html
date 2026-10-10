@@ -107,8 +107,13 @@
     .certificate-submit { background: #b45309; border-color: #b45309; }
     .lecture-survey { margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border); }
     .lms-link:focus-visible { outline: 3px solid var(--primary); outline-offset: 3px; }
+    .lecture-video-links { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+    .lecture-video-link { display: flex; align-items: center; justify-content: center; min-width: 0; min-height: 56px; text-align: center; text-decoration: none; font-weight: 700; }
+    .lecture-video-link:hover { background: #1a4a80; }
+    .lecture-video-link:focus-visible { outline: 3px solid var(--primary); outline-offset: 3px; }
     @media (min-width: 600px) {
-      .tabs { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+      .tabs { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+      .lecture-video-links { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .q-card { padding: 24px; }
       .review-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
     }
@@ -127,6 +132,7 @@
     <button type="button" id="tab-antibody" role="tab" aria-selected="false" aria-controls="panel-antibody" tabindex="-1">抗体の構造と機能</button>
     <button type="button" id="tab-quiz" role="tab" aria-selected="false" aria-controls="panel-quiz" tabindex="-1">復習クイズ</button>
     <button type="button" id="tab-questions" role="tab" aria-selected="false" aria-controls="panel-questions" tabindex="-1">講義について質問</button>
+    <button type="button" id="tab-videos" role="tab" aria-selected="false" aria-controls="panel-videos" tabindex="-1">講義動画</button>
   </nav>
   <main>
     <noscript><p class="card">このアプリを利用するには、ブラウザのJavaScriptを有効にしてください。</p></noscript>
@@ -209,6 +215,16 @@
           <li>抗体のFabとFcは、それぞれどのような役割を担っていますか？</li>
         </ul>
         <a class="btn notebook-link" id="notebook-link" href="https://notebook.google.com/notebook/066c923b-43ce-422f-86fa-d5b7637f66b8" target="_blank" rel="noopener noreferrer">Gemini Notebookで質問する</a>
+      </div>
+    </section>
+    <section id="panel-videos" role="tabpanel" aria-labelledby="tab-videos" hidden>
+      <div class="card">
+        <h2 class="review-title">第3回 講義動画</h2>
+        <p class="lead">第3回の講義動画をPart 1、Part 2の順に視聴してください。</p>
+        <div class="lecture-video-links">
+          <a class="btn lecture-video-link" href="https://lms.keio.jp/courses/151918/modules/items/6577255" target="_blank" rel="noopener noreferrer">▶ 講義動画 Part 1</a>
+          <a class="btn lecture-video-link" href="https://lms.keio.jp/courses/151918/modules/items/6577257" target="_blank" rel="noopener noreferrer">▶ 講義動画 Part 2</a>
+        </div>
       </div>
     </section>
   </main>
