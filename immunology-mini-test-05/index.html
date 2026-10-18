@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>第5回 Interactive Lab — MHCによる抗原提示</title>
+  <style>
+    :root {
+      --bg: #f7f9fc;
+      --card: #ffffff;
+      --border: #d7dce5;
+      --ink: #1a2633;
+      --muted: #5a6978;
+      --primary: #2b6cb0;
+      --accent: #b83030;
+      --ok: #247347;
+    }
+    * { box-sizing: border-box; }
+    [hidden] { display: none !important; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font: 16px/1.7 -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", sans-serif;
+      overflow-wrap: anywhere;
+    }
+    header { padding: 24px 16px; background: linear-gradient(135deg, var(--primary), #1a4a80); color: white; }
+    .header-inner, main, .progress-inner { width: 100%; max-width: 800px; margin: 0 auto; }
+    h1 { font-size: 24px; margin: 0; }
+    header p { font-size: 14px; margin: 4px 0 0; }
+    .quiz-header { position: sticky; top: 0; z-index: 10; background: white; border-bottom: 1px solid var(--border); padding: 12px 16px; }
+    .progress-inner { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 16px; align-items: center; }
+    #quiz-progress { font-size: 14px; }
+    #quiz-score { font-size: 18px; color: var(--primary); }
+    main { padding: 24px 16px; }
+    .lead { color: var(--muted); margin: 0 0 20px; }
+    .card, .q-card { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 16px; margin-bottom: 16px; }
+    .q-num { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 14px; }
+    .q-num { background: var(--primary); color: white; }
+    .q-stem { font-size: 17px; margin: 12px 0 16px; }
+    .q-opts { display: flex; flex-direction: column; gap: 8px; }
+    button { min-height: 44px; font: inherit; cursor: pointer; }
+    button:focus-visible, #quiz-finish:focus-visible { outline: 3px solid var(--primary); outline-offset: 3px; }
+    .q-opt { width: 100%; display: flex; gap: 10px; align-items: flex-start; padding: 12px; border: 1.5px solid var(--border); border-radius: 6px; background: white; color: var(--ink); text-align: left; }
+    .opt-letter { flex: 0 0 24px; font-weight: 700; }
+    .opt-text { min-width: 0; }
+    .q-opt:hover:not(:disabled) { background: #f0f7ff; border-color: var(--primary); }
+    .q-opt:disabled { cursor: default; opacity: 1; }
+    .q-opt.correct { background: #c6f6d5; border-color: var(--ok); }
+    .q-opt.wrong { background: #fed7d7; border-color: var(--accent); }
+    .q-card.answered.correct { border-color: var(--ok); }
+    .q-card.answered.incorrect { border-color: var(--accent); }
+    .q-explain { padding: 12px; margin-top: 16px; border-left: 3px solid var(--primary); background: #f7fafc; border-radius: 4px; }
+    .q-explain p { margin: 8px 0 0; }
+    .quiz-finish { text-align: center; scroll-margin-top: 100px; }
+    .quiz-finish.passed { border: 2px solid var(--ok); background: #f0fff4; }
+    .quiz-finish.failed { border: 2px solid #ad6817; background: #fffaf0; }
+    .quiz-finish h2 { font-size: 22px; margin: 0; }
+    .final-score { font-size: 28px; font-weight: 700; margin: 8px 0; }
+    .btn { border: 1px solid var(--primary); border-radius: 6px; padding: 10px 20px; background: var(--primary); color: white; }
+    .btn:disabled { cursor: default; opacity: 0.6; }
+    .notice { font-size: 14px; color: var(--muted); }
+    .certificate-form { margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border); text-align: left; }
+    .certificate-form label { display: block; font-weight: 700; }
+    .certificate-form input { display: block; width: 100%; min-height: 44px; margin: 8px 0 12px; padding: 10px; border: 1px solid var(--border); border-radius: 6px; font: inherit; background: white; }
+    .certificate-form input:focus-visible { outline: 3px solid var(--primary); outline-offset: 2px; }
+    .certificate-form .btn { width: 100%; }
+    #certificate-error { color: var(--accent); font-size: 14px; }
+    #load-message, #storage-message { padding: 12px; background: #fffaf0; border-left: 3px solid #ad6817; }
+    footer { padding: 20px 16px; text-align: center; font-size: 14px; color: var(--muted); }
+    .tabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; max-width: 800px; margin: 0 auto; padding: 12px 16px 0; }
+    .tabs button { min-width: 0; min-height: 44px; padding: 10px 4px; border: 0; border-bottom: 3px solid transparent; background: white; color: var(--muted); font-size: 14px; }
+    .tabs button[aria-selected="true"] { border-bottom-color: var(--primary); color: var(--primary); font-weight: 700; }
+    .review-title { margin: 0 0 12px; font-size: 22px; }
+    .tabs button[aria-selected="true"]::after { content: "（選択中）"; display: block; font-size: 14px; }
+    .tool-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
+    .tool-card { width: 100%; min-width: 0; min-height: 64px; padding: 16px; border: 2px solid var(--border); border-radius: 8px; background: white; color: var(--primary); font: inherit; font-weight: 700; text-align: left; }
+    .tool-card[aria-pressed="true"], .tool-card[aria-expanded="true"] { border-color: var(--primary); background: #f0f7ff; }
+    .tool-card[aria-pressed="true"]::after { content: "選択中"; display: block; font-size: 14px; }
+    .flow-details { padding: 16px; margin: 16px 0; border-left: 3px solid var(--primary); border-radius: 4px; background: white; }
+    .flow-details h3 { margin: 0 0 8px; font-size: 18px; }
+    .flow-details ul { margin: 0; padding-left: 24px; }
+    .flow-details p { margin: 12px 0 0; }
+    .step-status { margin: 12px 0; font-size: 14px; color: var(--muted); }
+    .switch-source { text-align: center; }
+    .switch-source .tool-card { max-width: 360px; text-align: center; }
+    .flow-arrow { text-align: center; color: var(--primary); font-size: 24px; }
+    .switch-targets { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+    .switch-targets > div { padding: 16px 8px; border: 2px solid var(--primary); border-radius: 8px; text-align: center; font-weight: 700; background: #f0f7ff; }
+    .switch-summary { font-weight: 700; }
+    .notebook-link { display: block; width: 100%; min-height: 52px; font-weight: 700; }
+    .lms-link { display: flex; align-items: center; justify-content: center; width: 100%; min-height: 52px; text-decoration: none; text-align: center; font-weight: 700; }
+    .lms-link:focus-visible { outline: 3px solid var(--primary); outline-offset: 3px; }
+    .lecture-survey-link:hover { background: #1a4a80; }
+    .certificate-submit { background: #b45309; border-color: #b45309; }
+    .certificate-submit:hover { background: #92400e; }
+    h3 { font-size: 18px; }
+    .compare-columns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+    .compare-columns > div { min-width: 0; padding: 8px; background: #f0f7ff; border-radius: 6px; }
+    .compare-columns p { margin: 8px 0; }
+    .materials-link { display: inline-flex; align-items: center; min-height: 44px; color: var(--primary); }
+
+    @media (min-width: 600px) {
+      .tabs { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+      .tool-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .class-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+      .q-card { padding: 24px; }
+    }
+  </style>
+</head>
+<body>
+  <header><div class="header-inner">
+    <h1>第5回 Interactive Lab — MHCによる抗原提示</h1>
+    <p>免疫学 第5回 · MHCによる抗原提示とT細胞の分化</p>
+  </div></header>
+  <nav class="tabs" role="tablist" aria-label="復習ツール">
+    <button type="button" id="tab-mhc" role="tab" aria-selected="true" aria-controls="panel-mhc">MHCクラスIとII</button>
+    <button type="button" id="tab-pathways" role="tab" aria-selected="false" aria-controls="panel-pathways" tabindex="-1">抗原提示経路</button>
+    <button type="button" id="tab-development" role="tab" aria-selected="false" aria-controls="panel-development" tabindex="-1">T細胞の分化</button>
+    <button type="button" id="tab-quiz" role="tab" aria-selected="false" aria-controls="panel-quiz" tabindex="-1">復習テスト</button>
+    <button type="button" id="tab-survey" role="tab" aria-selected="false" aria-controls="panel-survey" tabindex="-1">授業アンケート</button>
+    <button type="button" id="tab-questions" role="tab" aria-selected="false" aria-controls="panel-questions" tabindex="-1">講義について質問</button>
+  </nav>
+  <main>
+    <noscript><p class="card">このアプリを利用するには、ブラウザのJavaScriptを有効にしてください。</p></noscript>
+<section id="panel-mhc" role="tabpanel" aria-labelledby="tab-mhc">
+<h2 class="review-title">MHCクラスIとMHCクラスIIを比較しよう</h2>
+<p class="lead">T細胞は抗原そのものではなく、MHC分子に結合した抗原ペプチドを認識します。MHCクラスIとMHCクラスIIでは、提示する抗原の由来、認識するT細胞、発現する細胞、構造が異なります。</p>
+<p class="notice">カードを選ぶと詳細を表示します。下の比較パネルでは両者を見比べられます。</p>
+<div class="tool-grid" id="mhc-cards" role="group" aria-label="MHCクラスの選択"></div><div class="flow-details" id="mhc-details" role="status" aria-live="polite" aria-atomic="true"></div>
+<h3>比較パネル</h3><div id="comparison"></div>
+<div class="card"><h3>CD4とCD8</h3><p>CD4とCD8はTCRの補助レセプターとして機能し、CD4はMHCクラスII、CD8はMHCクラスIとの結合を補助する。</p></div></section><section id="panel-pathways" role="tabpanel" aria-labelledby="tab-pathways" hidden><h2 class="review-title">抗原はどのようにT細胞へ提示される？</h2><p class="lead">MHCクラスI経路とMHCクラスII経路では、抗原の分解場所とMHC分子へのペプチドの受け渡し方法が異なります。「次へ」ボタンで各段階を順番に確認しましょう。</p><h3>MHCクラスI経路</h3><div class="tool-grid" id="path-i-cards" role="group" aria-label="MHCクラスI経路の5段階"></div><div class="flow-details" id="path-i-details" role="status" aria-live="polite" aria-atomic="true"></div><p class="step-status" id="path-i-status"></p><button class="btn" type="button" id="path-i-next">次へ</button><div class="card"><h3>重要分子：MHCクラスI経路</h3><p>プロテアソーム：蛋白を分解する<br>TAP：抗原ペプチドを細胞質から小胞体へ運ぶ<br>Tapasin：MHCクラスIとTAPを架橋し、適切なペプチドが結合するのを助ける</p></div><div class="card"><h3>補足：交差提示（cross-presentation）</h3><p>樹状細胞は細胞外から取り込んだウイルスなどの抗原をMHCクラスIで提示できる。これを交差提示（cross-presentation）と呼ぶ。ナイーブCD8+ T細胞の活性化に重要。</p></div><h3>MHCクラスII経路</h3><div class="tool-grid" id="path-ii-cards" role="group" aria-label="MHCクラスII経路の5段階"></div><div class="flow-details" id="path-ii-details" role="status" aria-live="polite" aria-atomic="true"></div><p class="step-status" id="path-ii-status"></p><button class="btn" type="button" id="path-ii-next">次へ</button><div class="card"><h3>重要分子：MHCクラスII経路</h3><p>CLIP：MHCクラスIIのペプチド結合部に一時的に残る<br>HLA-DM：CLIPを外し、抗原ペプチドとの結合を可能にする<br>カテプシン：取り込まれた抗原蛋白を分解する</p></div><div class="card"><h3>補足：ウイルスによる免疫回避</h3><p>病原ウイルスの多くはMHCクラスIによる抗原提示を阻害して免疫系から逃れる。講義資料の例：TAPを標的、Tapasinを標的、MHCクラスIを標的。<br>ウイルスが免疫系の認識から逃れるために産生する蛋白質をイムノエバシン（immunoevasin）と呼ぶ。</p></div></section><section id="panel-development" role="tabpanel" aria-labelledby="tab-development" hidden><h2 class="review-title">T細胞は胸腺でどのように分化する？</h2><p class="lead">T細胞前駆細胞は骨髄から胸腺へ移動し、TCR遺伝子を再編成しながら分化します。胸腺では正の選択と負の選択を受けたT細胞だけが末梢へ移行します。</p><p class="card">DN → 分岐（γδ型T細胞／αβ型T細胞）<br>αβ型T細胞の経路：DP → SP → 末梢リンパ組織</p><div class="tool-grid" id="development-cards" role="group" aria-label="胸腺でのT細胞分化の4段階"></div><div class="flow-details" id="development-details" role="status" aria-live="polite" aria-atomic="true"></div><p class="step-status" id="development-status"></p><button class="btn" type="button" id="development-next">次へ</button><div class="tool-grid"><div class="card"><h3>正の選択</h3><p>自己MHCを認識できる未熟T細胞は生存シグナルを受け取る。</p></div><div class="card"><h3>負の選択</h3><p>自己抗原に強く反応する未熟T細胞は除去される。</p></div></div><div class="card"><h3>成熟後</h3><p>成熟したT細胞は末梢リンパ組織へ移行する。特異的抗原と出会って活性化される。</p></div><div class="card"><h3>補足：γδ型T細胞</h3><p>αβ型T細胞に比べてクローンのレパートリーが少ない。腸管や皮膚などの上皮層に入り、上皮内リンパ球となる。</p></div></section>    <section id="panel-quiz" role="tabpanel" aria-labelledby="tab-quiz" hidden>
+  <div class="quiz-header" role="status" aria-live="polite" aria-atomic="true">
+    <div class="progress-inner">
+      <span id="quiz-progress">0 / 6 問回答済み</span>
+      <strong id="quiz-score">得点：0 / 6 点</strong>
+    </div>
+  </div>
+    <p class="lead">正しい選択肢を1つ選んでください。選ぶとすぐに採点し、解説を表示します。回答後の変更はできません。</p>
+    <p class="notice">1問1点。6問中5問以上正解（正答率80%以上）で合格です。</p>
+    <p id="load-message" role="status">問題を読み込んでいます。</p>
+    <noscript><p>クイズを利用するには、ブラウザのJavaScriptを有効にしてください。</p></noscript>
+    <p id="storage-message" role="status" hidden></p>
+    <div id="quiz-list"></div>
+    <section class="quiz-finish card" id="quiz-finish" tabindex="-1" aria-labelledby="quiz-finish-title" hidden>
+      <h2 id="quiz-finish-title">結果</h2>
+      <p class="final-score" id="quiz-finish-score"></p>
+      <p id="quiz-finish-msg"></p>
+      <form class="certificate-form" id="certificate-form" hidden novalidate>
+        <label for="student-number">学籍番号</label>
+        <input id="student-number" type="text" maxlength="32" autocomplete="off" spellcheck="false" required aria-describedby="certificate-note certificate-error">
+        <p id="certificate-error" role="alert" hidden></p>
+        <button class="btn" type="submit">修了証PDFを保存</button>
+        <p class="notice">修了証PDFを保存した後、下のボタンからK-LMSへ提出してください。</p>
+        <a class="btn lms-link certificate-submit" id="quiz-submit-link" href="https://lms.keio.jp/courses/151918/assignments/1333913?module_item_id=6577362" target="_blank" rel="noopener noreferrer">📤 修了証を提出</a>
+        <p class="notice" id="certificate-note">別ウィンドウの印刷画面で「PDFとして保存」を選んでください。学籍番号は修了証の作成にのみ使用し、ブラウザへの保存や外部送信は行いません。</p>
+      </form>
+    </section>
+    <button class="btn" id="quiz-reset" type="button" disabled>クイズをリセット</button>
+    <p class="notice">このブラウザに回答状況を保存し、再読み込み後も続きから再開します。リセットすると回答を消去し、問題の順番だけを並べ直します。選択肢の順番は変わりません。</p>
+    </section>
+    <section id="panel-survey" role="tabpanel" aria-labelledby="tab-survey" hidden>
+      <div class="card">
+        <h2 class="review-title">授業アンケート</h2>
+        <p class="lead">第5回の授業アンケートにご協力ください。</p>
+        <a class="btn lms-link lecture-survey-link" id="lecture-survey-link" href="https://lms.keio.jp/courses/151918/assignments/1333914" target="_blank" rel="noopener noreferrer">📝 授業アンケートに回答</a>
+      </div>
+    </section>
+    <section id="panel-questions" role="tabpanel" aria-labelledby="tab-questions" hidden>
+      <div class="card">
+        <h2 class="review-title">講義について質問</h2>
+        <p class="lead">第5回の講義内容について、Gemini Notebookに質問できます。</p>
+        <div id="notebook-action"></div>
+      </div>
+    </section>
+  </main>
+  <footer>免疫学 · Interactive Lab<br><a class="materials-link" href="https://lms.keio.jp/courses/151918/files/9299336?module_item_id=6584206" target="_blank" rel="noopener noreferrer">第5回 講義資料（K-LMS）</a></footer>
+  <script type="module">
+    // タブ切り替えではクイズを再生成せず、回答と入力内容を維持します。
+    const tabs = [...document.querySelectorAll('[role="tab"]')];
+    function selectTab(selected) {
+      tabs.forEach(tab => {
+        const active = tab === selected;
+        tab.setAttribute('aria-selected', String(active));
+        tab.tabIndex = active ? 0 : -1;
+        document.getElementById(tab.getAttribute('aria-controls')).hidden = !active;
+      });
+    }
+    tabs.forEach((tab, index) => {
+      tab.addEventListener('click', () => selectTab(tab));
+      tab.addEventListener('keydown', event => {
+        let next;
+        if (event.key === 'ArrowRight') next = (index + 1) % tabs.length;
+        if (event.key === 'ArrowLeft') next = (index + tabs.length - 1) % tabs.length;
+        if (event.key === 'Home') next = 0;
+        if (event.key === 'End') next = tabs.length - 1;
+        if (next === undefined) return;
+        event.preventDefault();
+        selectTab(tabs[next]);
+        tabs[next].focus();
+      });
+    });
+
+    // 説明は仕様書の文言をそのまま使用し、HTMLではなく文字として表示します。
+    const MHC = [{"title": "MHCクラスI", "items": ["細胞質の可溶性抗原を提示", "細胞内で増殖したウイルス抗原などを提示", "CD8+ T細胞（細胞傷害性T細胞）に抗原提示", "すべての有核細胞に発現", "赤血球には発現しない", "α鎖とβ2ミクログロブリンからなる", "ペプチド収容溝は両端が閉じている", "8〜10アミノ酸残基程度の短いペプチドと結合"]}, {"title": "MHCクラスII", "items": ["エンドソーム・リソソーム内の抗原を提示", "細胞外から取り込んだ細菌抗原などを提示", "CD4+ T細胞（ヘルパーT細胞）に抗原提示", "B細胞、マクロファージ、樹状細胞など限られた細胞に発現", "胸腺上皮細胞にも発現する", "α鎖とβ鎖からなる", "ペプチド収容溝は両端が開放されている", "12アミノ酸残基以上の様々な長さのペプチドと結合"]}];
+    const PATH_I = [{"title": "ステップ1", "items": ["細胞質で抗原蛋白が存在・合成される。"]}, {"title": "ステップ2", "items": ["抗原蛋白がプロテアソームで分解される。"]}, {"title": "ステップ3", "items": ["分解された抗原ペプチドがTAPによって細胞質から小胞体へ運ばれる。"]}, {"title": "ステップ4", "items": ["小胞体でMHCクラスI分子と抗原ペプチドが結合する。"]}, {"title": "ステップ5", "items": ["MHCクラスI–ペプチド複合体が細胞表面へ運ばれ、CD8+ T細胞に認識される。"]}];
+    const PATH_II = [{"title": "ステップ1", "items": ["MHCクラスII分子が新たに合成され、MIICへ運ばれる。"]}, {"title": "ステップ2", "items": ["インバリアント鎖が分解され、CLIPがMHCクラスIIのペプチド結合部に残る。"]}, {"title": "ステップ3", "items": ["エンドサイトーシスされた抗原蛋白がカテプシンによって分解される。"]}, {"title": "ステップ4", "items": ["HLA-DMがCLIPを外し、MHCクラスIIが抗原ペプチドと結合する。"]}, {"title": "ステップ5", "items": ["MHCクラスII–ペプチド複合体が細胞表面へ運ばれ、CD4+ T細胞に認識される。"]}];
+    const DEVELOPMENT = [{"title": "ダブルネガティブ（DN）", "items": ["CD4− CD8−", "β、γ、δ鎖の再編成が起こる"]}, {"title": "分岐", "items": ["γ鎖とδ鎖を発現した細胞はγδ型T細胞へ", "β鎖を発現した細胞の多くはαβ型T細胞の経路へ進む"]}, {"title": "ダブルポジティブ（DP）", "items": ["CD4+ CD8+", "αβ型T細胞の発達段階"]}, {"title": "シングルポジティブ（SP）", "items": ["CD4+ CD8− または CD4− CD8+"]}];
+
+    function createTool(prefix, data, numbered = true) {
+      const cards = document.getElementById(`${prefix}-cards`);
+      const details = document.getElementById(`${prefix}-details`);
+      const next = document.getElementById(`${prefix}-next`);
+      const status = document.getElementById(`${prefix}-status`);
+      let selected = 0;
+      const buttons = data.map((entry, i) => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'tool-card';
+        button.textContent = `${numbered ? `${i + 1}. ` : ''}${entry.title}`;
+        button.setAttribute('aria-pressed', 'false');
+        button.setAttribute('aria-controls', details.id);
+        button.addEventListener('click', () => show(i));
+        cards.appendChild(button);
+        return button;
+      });
+      function show(index) {
+        selected = index;
+        buttons.forEach((button, i) => button.setAttribute('aria-pressed', String(i === index)));
+        details.replaceChildren();
+        const entry = data[index];
+        const title = document.createElement('h3');
+        title.textContent = entry.title;
+        details.appendChild(title);
+        function appendItems(items) {
+          const list = document.createElement('ul');
+          items.forEach(text => {
+            const item = document.createElement('li');
+            item.textContent = text;
+            list.appendChild(item);
+          });
+          details.appendChild(list);
+        }
+        appendItems(entry.items);
+        if (entry.note) {
+          const note = document.createElement('p');
+          note.textContent = entry.note;
+          details.appendChild(note);
+        }
+        if (entry.adcc) {
+          const heading = document.createElement('h3');
+          heading.textContent = 'ADCC（抗体依存性細胞傷害）';
+          details.appendChild(heading);
+          appendItems(entry.adcc);
+        }
+        if (status) status.textContent = `ステップ ${index + 1} / ${data.length}`;
+        if (next) next.textContent = index === data.length - 1 ? '最初へ' : '次へ';
+      }
+      if (next) next.addEventListener('click', () => show((selected + 1) % data.length));
+      show(0);
+    }
+    createTool('mhc', MHC, false);
+    createTool('path-i', PATH_I);
+    createTool('path-ii', PATH_II);
+    createTool('development', DEVELOPMENT);
+    // 仕様書の6項目を、スマートフォンでも左右に比較できるカードにします。
+    const groups = [[0, 1], [2], [3, 4], [5], [6], [7]];
+    ['抗原の由来', '認識するT細胞', '発現する細胞', '分子構造', 'ペプチド収容溝', '抗原ペプチドの長さ'].forEach((label, i) => {
+      const row = document.createElement('section');
+      row.className = 'card';
+      const heading = document.createElement('h3');
+      heading.textContent = label;
+      row.appendChild(heading);
+      const columns = document.createElement('div');
+      columns.className = 'compare-columns';
+      MHC.forEach(entry => {
+        const column = document.createElement('div');
+        const title = document.createElement('strong');
+        title.textContent = entry.title;
+        column.appendChild(title);
+        groups[i].forEach(index => {
+          const text = document.createElement('p');
+          text.textContent = entry.items[index];
+          column.appendChild(text);
+        });
+        columns.appendChild(column);
+      });
+      row.appendChild(columns);
+      document.getElementById('comparison').appendChild(row);
+    });
+    // Gemini Notebookのリンク先は、この定数で設定します。
+    const GEMINI_NOTEBOOK_URL = 'https://notebook.google.com/notebook/cab59349-aa8c-42ed-be5c-77c454525067';
+    const notebook = document.createElement('a');
+    notebook.className = 'btn notebook-link lms-link';
+    notebook.href = GEMINI_NOTEBOOK_URL;
+    notebook.target = '_blank';
+    notebook.rel = 'noopener noreferrer';
+    notebook.textContent = 'Gemini Notebookで質問する →';
+    document.getElementById('notebook-action').appendChild(notebook);
+
+    const loadMessage = document.getElementById('load-message');
+    try {
+      const { QUIZ } = await import('./quiz-data.js');
+      if (!Array.isArray(QUIZ) || QUIZ.length !== 6) throw new Error('問題データが不正です。');
+      if (QUIZ.length === 0) {
+        loadMessage.textContent = '復習クイズは準備中です';
+      } else {
+        if (!QUIZ.every(question => question &&
+            typeof question.stem === 'string' && question.stem.trim() &&
+            Array.isArray(question.options) && [4, 5].includes(question.options.length) &&
+            question.options.every(option => typeof option === 'string' && option.trim()) &&
+            Number.isInteger(question.correct) && question.correct >= 0 && question.correct < question.options.length &&
+            typeof question.explain === 'string' && question.explain.trim())) {
+          throw new Error('問題データが不正です。');
+        }
+        startQuiz(QUIZ);
+        loadMessage.hidden = true;
+      }
+    } catch (error) {
+      loadMessage.textContent = location.protocol === 'file:'
+        ? 'このクイズはHTMLファイルを直接開くと問題を読み込めません。GitHub Pages、またはローカルプレビューのURLから開いてください。'
+        : '問題を読み込めませんでした。通信状況と、同じフォルダの quiz-data.js の内容を確認して、再読み込みしてください。';
+    }
+
+    function startQuiz(QUIZ) {
+      const STORAGE_KEY = 'immunology_quiz_05_v1';
+      const signature = JSON.stringify(QUIZ);
+      const LETTERS = ['A', 'B', 'C', 'D', 'E'];
+      const list = document.getElementById('quiz-list');
+      const finish = document.getElementById('quiz-finish');
+      const storageMessage = document.getElementById('storage-message');
+      const certificateForm = document.getElementById('certificate-form');
+      const studentNumber = document.getElementById('student-number');
+      const certificateError = document.getElementById('certificate-error');
+      let restoreNotice = '';
+      let state = loadState();
+
+      function newState() {
+        const order = QUIZ.map((_, i) => i);
+        // 問題順だけを新規開始・リセット時に並べ替えます。選択肢順は固定です。
+        for (let i = order.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [order[i], order[j]] = [order[j], order[i]];
+        }
+        return { signature, order, answers: QUIZ.map(() => null) };
+      }
+
+      function loadState() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if (raw === null) return newState();
+          const saved = JSON.parse(raw);
+          // 問題データの一致と、順序・回答の範囲を検証してから復元します。
+          if (saved && saved.signature === signature &&
+              Array.isArray(saved.order) && saved.order.length === QUIZ.length &&
+              new Set(saved.order).size === QUIZ.length &&
+              saved.order.every(i => Number.isInteger(i) && i >= 0 && i < QUIZ.length) &&
+              Array.isArray(saved.answers) && saved.answers.length === QUIZ.length &&
+              saved.answers.every((a, i) => a === null || (Number.isInteger(a) && a >= 0 && a < QUIZ[i].options.length))) {
+            return { signature, order: saved.order, answers: saved.answers };
+          }
+          restoreNotice = '問題の更新または保存データの不整合があるため、第5回のクイズを最初から開始します。';
+        } catch (error) {
+          restoreNotice = '保存した回答を読み込めないため、第5回のクイズを最初から開始します。';
+        }
+        return newState();
+      }
+
+      function saveState() {
+        try {
+          // 学籍番号や得点は保存せず、問題ごとの回答から得点を計算します。
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+          storageMessage.textContent = restoreNotice;
+          storageMessage.hidden = !restoreNotice;
+        } catch (error) {
+          storageMessage.textContent = [restoreNotice, 'このブラウザでは回答を保存できません。クイズは続けられますが、再読み込みすると今回の回答が失われる場合があります。'].filter(Boolean).join(' ');
+          storageMessage.hidden = false;
+        }
+      }
+
+      function updateSummary() {
+        const done = state.answers.filter(a => a !== null).length;
+        const score = state.answers.filter((a, i) => a === QUIZ[i].correct).length;
+        document.getElementById('quiz-progress').textContent = `${done} / ${QUIZ.length} 問回答済み`;
+        document.getElementById('quiz-score').textContent = `得点：${score} / ${QUIZ.length} 点`;
+        finish.hidden = done !== QUIZ.length;
+        certificateForm.hidden = done !== QUIZ.length || score < 5;
+        if (certificateForm.hidden) {
+          certificateForm.reset();
+          certificateError.hidden = true;
+          studentNumber.removeAttribute('aria-invalid');
+        }
+        if (!finish.hidden) {
+          const passed = score >= 5;
+          finish.classList.toggle('passed', passed);
+          finish.classList.toggle('failed', !passed);
+          document.getElementById('quiz-finish-title').textContent = passed ? '結果：合格' : '結果：不合格';
+          document.getElementById('quiz-finish-score').textContent = `${score} / ${QUIZ.length} 点（正答率 ${Math.round(score / QUIZ.length * 100)}%）`;
+          document.getElementById('quiz-finish-msg').textContent = passed
+            ? '合格基準を達成しました。各問題の解説も確認しましょう。'
+            : '合格には5問以上の正解が必要です。解説を確認し、リセットして再挑戦できます。';
+        }
+      }
+
+      function updateCard(card, qi) {
+        const answer = state.answers[qi];
+        if (answer === null) return;
+        const question = QUIZ[qi];
+        const correct = answer === question.correct;
+        card.classList.add('answered', correct ? 'correct' : 'incorrect');
+        card.querySelectorAll('.q-opt').forEach((button, displayIndex) => {
+          const oi = displayIndex;
+          button.disabled = true;
+          button.classList.toggle('correct', oi === question.correct);
+          button.classList.toggle('wrong', oi === answer && !correct);
+        });
+        const explain = card.querySelector('.q-explain');
+        explain.hidden = false;
+        explain.querySelector('strong').textContent = `${correct ? '正解です。' : '不正解です。'} あなたの回答：${LETTERS[answer]} ／ 正解：${LETTERS[question.correct]}`;
+      }
+
+      function renderQuiz() {
+        list.replaceChildren();
+        state.order.forEach((qi, position) => {
+          const question = QUIZ[qi];
+          const card = document.createElement('section');
+          card.className = 'q-card';
+          card.dataset.qi = qi;
+          card.setAttribute('aria-labelledby', `question-${qi}`);
+          card.innerHTML = '<div><span class="q-num"></span></div><h2 class="q-stem"></h2><div class="q-opts"></div><div class="q-explain" aria-live="polite" hidden><strong></strong><p></p></div>';
+          card.querySelector('.q-num').textContent = `問 ${position + 1}`;
+          const stem = card.querySelector('.q-stem');
+          stem.id = `question-${qi}`;
+          stem.textContent = question.stem;
+          card.querySelector('.q-explain p').textContent = `解説：${question.explain}`;
+          // 原稿のA〜Eの順番を保ち、選択肢番号をそのまま回答に記録します。
+          question.options.forEach((option, oi) => {
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = 'q-opt';
+            button.innerHTML = '<span class="opt-letter"></span><span class="opt-text"></span>';
+            button.querySelector('.opt-letter').textContent = `${LETTERS[oi]}.`;
+            button.querySelector('.opt-text').textContent = option;
+            button.addEventListener('click', () => {
+              if (state.answers[qi] !== null) return;
+              state.answers[qi] = oi;
+              updateCard(card, qi);
+              updateSummary();
+              saveState();
+              if (!finish.hidden) finish.focus();
+            });
+            card.querySelector('.q-opts').appendChild(button);
+          });
+          updateCard(card, qi);
+          list.appendChild(card);
+        });
+        updateSummary();
+      }
+
+      // 入力値はHTMLとして解釈させず、修了証の文字として表示します。
+      function escapeHTML(value) {
+        return String(value).replace(/[&<>"']/g, character => ({
+          '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+        })[character]);
+      }
+
+      // 検証コードは同じ学籍番号・得点・日付から再現できる照合用です。
+      // 秘密鍵を使わないため、本人認証や改ざんの証明には使用できません。
+      function verificationCode(number, score, date) {
+        let hash = 2166136261;
+        const bytes = new TextEncoder().encode(JSON.stringify([number, score, date]));
+        for (const byte of bytes) hash = Math.imul(hash ^ byte, 16777619);
+        return (hash >>> 0).toString(16).toUpperCase().padStart(8, '0');
+      }
+
+      studentNumber.addEventListener('input', () => {
+        certificateError.hidden = true;
+        studentNumber.removeAttribute('aria-invalid');
+      });
+
+      certificateForm.addEventListener('submit', event => {
+        event.preventDefault();
+        // 表示状態だけに頼らず、出力時にも全問回答と合格を確認します。
+        const score = state.answers.filter((answer, i) => answer === QUIZ[i].correct).length;
+        if (state.answers.some(answer => answer === null) || score < 5) return;
+        const number = studentNumber.value.trim();
+        if (!number) {
+          certificateError.textContent = '学籍番号を入力してください。';
+          certificateError.hidden = false;
+          studentNumber.setAttribute('aria-invalid', 'true');
+          studentNumber.focus();
+          return;
+        }
+        certificateError.hidden = true;
+        const now = new Date();
+        const date = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+        const code = verificationCode(number, score, date);
+        const printHTML = `<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>免疫学ミニテスト 第5回 修了証</title>
+<style>
+  @page { size: A4 portrait; margin: 20mm; }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 16px; background: #f7f9fc; color: #1a2633; font: 16px/1.7 -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", sans-serif; overflow-wrap: anywhere; }
+  .certificate { width: 100%; max-width: 170mm; margin: 0 auto; padding: 24px; border: 2px solid #2b6cb0; background: white; }
+  h1 { margin: 0 0 32px; font-size: 24px; text-align: center; color: #1a4a80; }
+  .intro { margin-bottom: 28px; }
+  dl { margin: 0; }
+  dl > div { display: grid; grid-template-columns: 5em minmax(0, 1fr); gap: 12px; padding: 12px 0; border-bottom: 1px solid #d7dce5; }
+  dt { font-weight: 700; }
+  dd { margin: 0; }
+  .code { font-family: monospace; letter-spacing: 1px; }
+  .print-controls { max-width: 170mm; margin: 16px auto; font-size: 14px; }
+  button { min-height: 44px; padding: 10px 20px; font: inherit; color: white; background: #2b6cb0; border: 0; border-radius: 6px; cursor: pointer; }
+  @media print {
+    body { padding: 0; background: white; }
+    .certificate { max-width: none; padding: 12mm; break-inside: avoid; }
+    .print-controls { display: none; }
+  }
+</style>
+</head>
+<body>
+<main class="certificate">
+  <h1>免疫学ミニテスト 第5回 修了証</h1>
+  <p class="intro">免疫学ミニテスト 第5回の全6問に回答し、合格基準（6問中5問以上正解）を達成しました。</p>
+  <dl>
+    <div><dt>講義名</dt><dd>免疫学</dd></div>
+    <div><dt>回</dt><dd>第5回</dd></div>
+    <div><dt>学籍番号</dt><dd>${escapeHTML(number)}</dd></div>
+    <div><dt>得点</dt><dd>${QUIZ.length}問中${score}問正解</dd></div>
+    <div><dt>正答率</dt><dd>${Math.round(score / QUIZ.length * 100)}%</dd></div>
+    <div><dt>日付</dt><dd>${date}</dd></div>
+    <div><dt>検証コード</dt><dd class="code">${code}</dd></div>
+  </dl>
+</main>
+<div class="print-controls">
+  <p>印刷画面で「PDFとして保存」を選んでください。自動で開かない場合は、下のボタンを押してください。</p>
+  <button type="button" id="print-again">印刷画面を開く</button>
+</div>
+<script>
+  document.getElementById('print-again').addEventListener('click', () => window.print());
+  // 読み込みとフォントの準備、描画を待ってから印刷します。
+  window.addEventListener('load', async () => {
+    await document.fonts.ready;
+    requestAnimationFrame(() => requestAnimationFrame(() => window.print()));
+  });
+<\/script>
+</body>
+</html>`;
+        const url = URL.createObjectURL(new Blob([printHTML], { type: 'text/html;charset=utf-8' }));
+        const printWindow = window.open(url, '_blank');
+        if (!printWindow) {
+          URL.revokeObjectURL(url);
+          certificateError.textContent = '修了証を開けませんでした。このサイトのポップアップを許可して、もう一度出力してください。';
+          certificateError.hidden = false;
+          return;
+        }
+        printWindow.opener = null;
+        // 印刷中や再印刷時の読み込みを妨げないよう、閉じた後に解放します。
+        const closeTimer = setInterval(() => {
+          if (printWindow.closed) {
+            clearInterval(closeTimer);
+            URL.revokeObjectURL(url);
+          }
+        }, 1000);
+      });
+
+      document.getElementById('quiz-reset').addEventListener('click', () => {
+        restoreNotice = '';
+        state = newState();
+        saveState();
+        renderQuiz();
+        window.scrollTo(0, 0);
+      });
+      renderQuiz();
+      saveState();
+      document.getElementById('quiz-reset').disabled = false;
+    }
+  </script>
+</body>
+</html>
