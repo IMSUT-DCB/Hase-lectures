@@ -2,14 +2,14 @@ export const QUIZ = [
   {
     "stem": "MHCクラスIとMHCクラスIIが抗原を提示するT細胞の組み合わせとして正しいものはどれか？",
     "options": [
-      "MHCクラスI：ヘルパーT細胞、MHCクラスII：細胞傷害性T細胞",
-      "MHCクラスI：細胞傷害性T細胞、MHCクラスII：ヘルパーT細胞",
+      "MHCクラスI：CD4+ T細胞、MHCクラスII：CD8+ T細胞",
+      "MHCクラスI：CD8+ T細胞、MHCクラスII：CD4+ T細胞",
       "MHCクラスI：B細胞、MHCクラスII：NK細胞",
       "MHCクラスI：NK細胞、MHCクラスII：B細胞",
       "MHCクラスI：マクロファージ、MHCクラスII：好中球"
     ],
     "correct": 1,
-    "explain": "MHCクラスIは細胞傷害性T細胞に、MHCクラスIIはヘルパーT細胞に抗原を提示する。"
+    "explain": "MHCクラスIはCD8+ T細胞に、MHCクラスIIはCD4+ T細胞に抗原を提示する。"
   },
   {
     "stem": "MHCクラスI経路における抗原提示について正しい記述はどれか？",
