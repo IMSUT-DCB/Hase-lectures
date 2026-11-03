@@ -256,6 +256,9 @@
     createTool("eosinophil", [{"title": "Th2細胞由来のIL-5による活性化", "items": ["Th2細胞由来のIL-5による活性化"]}, {"title": "エオタキシンによる組織への遊走", "items": ["エオタキシンによる組織への遊走"]}, {"title": "活性化に伴うFcεRI発現", "items": ["活性化に伴うFcεRI発現"]}, {"title": "顆粒蛋白質や脂質メディエーターなどを放出", "items": ["顆粒蛋白質や脂質メディエーターなどを放出"]}, {"title": "アレルギー炎症を増幅", "items": ["アレルギー炎症を増幅"]}]);
     createTool("compare", [{"title": "II型", "items": ["組織・細胞表面の抗原に抗体が結合", "補体活性化", "マクロファージなどによる貪食", "NK細胞によるADCC", "輸血時の血液型不適合など"]}, {"title": "III型", "items": ["可溶性抗原と抗体から免疫複合体が形成", "組織に沈着", "補体が活性化", "炎症細胞が動員され組織障害", "アルサス反応", "血清病"]}, {"title": "IV型", "items": ["抗原特異的エフェクターT細胞による細胞性免疫", "遅延型", "Th1、Th2、細胞傷害性T細胞などが関与", "接触性皮膚炎", "ツベルクリン反応", "移植片拒絶"]}], false);
 
+    const params = new URLSearchParams(window.location.search);
+    const isRetest = params.get("mode") === "retest";
+
     // URLが提供されたら、この3項目だけを設定します。未設定時は外部リンクを作りません。
     const LINKS = {
       certificateSubmit: 'https://lms.keio.jp/courses/151918/assignments/1333919?module_item_id=6577370',
@@ -279,7 +282,10 @@
         container.prepend(notice);
       }
     }
-    configureLink('certificate-submit-action', LINKS.certificateSubmit, '📤 修了証を提出', 'certificate-submit');
+    // 再度試験ではCanvas側から提出するため、提出案内とボタンは作成しません。
+    if (!isRetest) {
+      configureLink('certificate-submit-action', LINKS.certificateSubmit, '📤 修了証を提出', 'certificate-submit');
+    }
     configureLink('survey-action', LINKS.survey, '📝 授業アンケートに回答', 'lecture-survey-link');
     configureLink('notebook-action', LINKS.notebook, 'Gemini Notebookで質問する →');
 
