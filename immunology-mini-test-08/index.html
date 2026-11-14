@@ -98,9 +98,14 @@
     .compare-columns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
     .compare-columns > div { min-width: 0; padding: 8px; background: #f0f7ff; border-radius: 6px; }
     .compare-columns p { margin: 8px 0; }
+    .lecture-video-links { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+    .lecture-video-link { display: flex; align-items: center; justify-content: center; min-width: 0; min-height: 56px; text-align: center; text-decoration: none; font-weight: 700; }
+    .lecture-video-link:hover { background: #1a4a80; }
+    .lecture-video-link:focus-visible { outline: 3px solid var(--primary); outline-offset: 3px; }
 
     @media (min-width: 600px) {
-      .tabs { grid-template-columns: repeat(7, minmax(0, 1fr)); }
+      .tabs { grid-template-columns: repeat(8, minmax(0, 1fr)); }
+      .lecture-video-links { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .tool-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .class-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); }
       .q-card { padding: 24px; }
@@ -113,7 +118,8 @@
     <p>免疫学 第8回 · アレルギー反応</p>
   </div></header>
   <nav class="tabs" role="tablist" aria-label="復習ツール">
-    <button type="button" id="tab-classification" role="tab" aria-selected="true" aria-controls="panel-classification">アレルギー反応の分類</button>
+    <button type="button" id="tab-videos" role="tab" aria-selected="true" aria-controls="panel-videos">講義動画</button>
+    <button type="button" id="tab-classification" role="tab" aria-selected="false" aria-controls="panel-classification" tabindex="-1">アレルギー反応の分類</button>
     <button type="button" id="tab-type1" role="tab" aria-selected="false" aria-controls="panel-type1" tabindex="-1">I型過敏反応</button>
     <button type="button" id="tab-types234" role="tab" aria-selected="false" aria-controls="panel-types234" tabindex="-1">II・III・IV型過敏反応</button>
     <button type="button" id="tab-treatment" role="tab" aria-selected="false" aria-controls="panel-treatment" tabindex="-1">好酸球とアレルギー治療</button>
@@ -123,7 +129,17 @@
   </nav>
   <main>
     <noscript><p class="card">このアプリを利用するには、ブラウザのJavaScriptを有効にしてください。</p></noscript>
-<section id="panel-classification" role="tabpanel" aria-labelledby="tab-classification"><h2 class="review-title">アレルギー反応はどのように分類される？</h2><p class="lead">アレルギーは、無害な外来抗原に対して生体の防御反応が過剰に応答した状態であり、免疫反応に基づく炎症反応である。</p><div class="card"><h3>アナフィラキシー</h3><ul><li>全身性に急激なアレルギーが起こった状態</li><li>低血圧、呼吸困難、じんま疹などを生じうる</li><li>重症では死に至ることがある</li></ul></div><div class="tool-grid"><div class="card"><h3>I型</h3><ul><li>IgEが関わる即時型過敏反応</li><li>代表例：花粉症、じんましん、アナフィラキシーなど</li></ul></div><div class="card"><h3>II型</h3><ul><li>組織・細胞表面抗原に抗体が結合</li><li>IgM、IgG、補体が関与</li><li>補体活性化、貪食、ADCCなどで細胞傷害</li></ul></div><div class="card"><h3>III型</h3><ul><li>可溶性抗原と抗体からなる免疫複合体が組織に沈着</li><li>IgGや補体が関与</li><li>代表例：アルサス反応、血清病</li></ul></div><div class="card"><h3>IV型</h3><ul><li>細胞性免疫による遅延型過敏反応</li><li>抗原特異的エフェクターT細胞が関与</li><li>代表例：接触性皮膚炎、ツベルクリン反応、移植片拒絶</li></ul></div></div></section>
+    <section id="panel-videos" role="tabpanel" aria-labelledby="tab-videos">
+      <div class="card">
+        <h2 class="review-title">第8回 講義動画</h2>
+        <p class="lead">第8回の講義動画をPart 1、Part 2の順に視聴してください。</p>
+        <div class="lecture-video-links">
+          <a class="btn lecture-video-link" href="https://lms.keio.jp/courses/151918/modules/items/6606905" target="_blank" rel="noopener noreferrer">▶ 講義動画 Part 1</a>
+          <a class="btn lecture-video-link" href="https://lms.keio.jp/courses/151918/modules/items/6607019" target="_blank" rel="noopener noreferrer">▶ 講義動画 Part 2</a>
+        </div>
+      </div>
+    </section>
+<section id="panel-classification" role="tabpanel" aria-labelledby="tab-classification" hidden><h2 class="review-title">アレルギー反応はどのように分類される？</h2><p class="lead">アレルギーは、無害な外来抗原に対して生体の防御反応が過剰に応答した状態であり、免疫反応に基づく炎症反応である。</p><div class="card"><h3>アナフィラキシー</h3><ul><li>全身性に急激なアレルギーが起こった状態</li><li>低血圧、呼吸困難、じんま疹などを生じうる</li><li>重症では死に至ることがある</li></ul></div><div class="tool-grid"><div class="card"><h3>I型</h3><ul><li>IgEが関わる即時型過敏反応</li><li>代表例：花粉症、じんましん、アナフィラキシーなど</li></ul></div><div class="card"><h3>II型</h3><ul><li>組織・細胞表面抗原に抗体が結合</li><li>IgM、IgG、補体が関与</li><li>補体活性化、貪食、ADCCなどで細胞傷害</li></ul></div><div class="card"><h3>III型</h3><ul><li>可溶性抗原と抗体からなる免疫複合体が組織に沈着</li><li>IgGや補体が関与</li><li>代表例：アルサス反応、血清病</li></ul></div><div class="card"><h3>IV型</h3><ul><li>細胞性免疫による遅延型過敏反応</li><li>抗原特異的エフェクターT細胞が関与</li><li>代表例：接触性皮膚炎、ツベルクリン反応、移植片拒絶</li></ul></div></div></section>
 <section id="panel-type1" role="tabpanel" aria-labelledby="tab-type1" hidden><h2 class="review-title">IgEとマスト細胞はどのようにI型過敏反応を起こす？</h2><h3>初回暴露</h3><p class="notice">カードを選ぶと詳細を表示します。「次へ」でも順番に確認できます。</p><div class="tool-grid" id="first-cards" role="group" aria-label="初回暴露の4段階"></div><div class="flow-details" id="first-details" role="status" aria-live="polite" aria-atomic="true"></div><p class="step-status" id="first-status"></p><button class="btn" type="button" id="first-next">次へ</button><h3>2回目以降の暴露</h3><p class="notice">カードを選ぶと詳細を表示します。「次へ」でも順番に確認できます。</p><div class="tool-grid" id="repeat-cards" role="group" aria-label="再暴露の5段階"></div><div class="flow-details" id="repeat-details" role="status" aria-live="polite" aria-atomic="true"></div><p class="step-status" id="repeat-status"></p><button class="btn" type="button" id="repeat-next">次へ</button><h3>主要分子</h3><div class="tool-grid"><div class="card"><h3>IgE</h3><ul><li>IgEが組織中のマスト細胞上のFcεRIに結合</li></ul></div><div class="card"><h3>FcεRI</h3><ul><li>IgEが組織中のマスト細胞上のFcεRIに結合</li></ul></div><div class="card"><h3>ヒスタミン</h3><ul><li>ヒスタミン、ロイコトリエンなどのメディエーターが放出</li></ul></div><div class="card"><h3>ロイコトリエン</h3><ul><li>平滑筋収縮、血管透過性亢進、白血球の動員などが起こる</li></ul></div></div></section>
 <section id="panel-types234" role="tabpanel" aria-labelledby="tab-types234" hidden><h2 class="review-title">II・III・IV型過敏反応</h2><p class="notice">カードを選ぶと詳細を表示します。</p><div class="tool-grid" id="compare-cards" role="group" aria-label="II・III・IV型の比較"></div><div class="flow-details" id="compare-details" role="status" aria-live="polite" aria-atomic="true"></div></section>
 <section id="panel-treatment" role="tabpanel" aria-labelledby="tab-treatment" hidden><h2 class="review-title">好酸球とアレルギー治療</h2><p class="notice">カードを選ぶと詳細を表示します。「次へ」でも順番に確認できます。</p><div class="tool-grid" id="eosinophil-cards" role="group" aria-label="好酸球の活性化と炎症の5段階"></div><div class="flow-details" id="eosinophil-details" role="status" aria-live="polite" aria-atomic="true"></div><p class="step-status" id="eosinophil-status"></p><button class="btn" type="button" id="eosinophil-next">次へ</button><div class="card"><h3>慢性喘息</h3><ul><li>Th2細胞による好酸球活性化が重要</li><li>慢性的な呼吸困難や喘鳴を示す</li></ul></div><h3>アレルギー症状を緩和する戦略</h3><div class="tool-grid"><div class="card"><h3>アレルゲン回避</h3><ul><li>食品、ダニ、花粉などとの接触を避ける</li></ul></div><div class="card"><h3>薬理学的介入</h3><ul><li>抗ヒスタミン薬</li><li>ロイコトリエン拮抗薬</li><li>低用量ステロイド</li><li>短時間作用型βアドレナリン受容体アゴニスト</li><li>IL-4、IL-5、IL-13などを標的とする抗体製剤</li></ul></div><div class="card"><h3>免疫学的手法</h3><ul><li>脱感作療法</li><li>急速経口免疫療法</li></ul></div></div></section>
